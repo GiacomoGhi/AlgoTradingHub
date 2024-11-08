@@ -18,6 +18,7 @@ class TimeIndicator : public BaseIndicator
     TimeIndicator(
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
+        BinFlags &produceSignalType,
         int openTradeHour,
         int closeTradeHour,
         TimeIndicatorSignalsEnum buySignal,
@@ -35,7 +36,7 @@ class TimeIndicator : public BaseIndicator
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
           // Call base class constructor
-          BaseIndicator(symbol, timeFrame)
+          BaseIndicator(symbol, timeFrame, &produceSignalType)
     {
     }
 
@@ -44,17 +45,17 @@ class TimeIndicator : public BaseIndicator
     {
         switch (signalType)
         {
-        case BuySignal:
-            return IsMovingAvarageValidSignal(_buySignalType);
+        case BUY_SIGNAL:
+            return IsTimeIndicatorValidSignal(_buySignalType);
 
-        case CloseBuySignal:
-            return IsMovingAvarageValidSignal(_closeBuySignalType);
+        case CLOSE_BUY_SIGNAL:
+            return IsTimeIndicatorValidSignal(_closeBuySignalType);
 
-        case SellSignal:
-            return IsMovingAvarageValidSignal(_sellSignalType);
+        case SELL_SIGNAL:
+            return IsTimeIndicatorValidSignal(_sellSignalType);
 
-        case CloseSellSignal:
-            return IsMovingAvarageValidSignal(_closeSellSignalType);
+        case CLOSE_SELL_SIGNAL:
+            return IsTimeIndicatorValidSignal(_closeSellSignalType);
         default:
             return false;
         }
@@ -63,18 +64,18 @@ class TimeIndicator : public BaseIndicator
     // Private methods
   private:
     // Return signal method result given a signal type
-    bool IsMovingAvarageValidSignal(TimeIndicatorSignalsEnum signalType)
+    bool IsTimeIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)
     {
         switch (signalType)
         {
         case CurrentHourIsOpenHour:
-            return IsCurrentHourIsOpenHour();
+            return IsCurrentHourOpenHour();
 
         case CurrentHourIsCloseHour:
-            return IsCurrentHourIsCloseHour();
+            return IsCurrentHourCloseHour();
 
         case CurrentTimeIsInRange:
-            return IsCurrentTimeIsInRange();
+            return IsCurrentTimeInRange();
 
         case AlwaysTrue:
             return true;
@@ -85,19 +86,19 @@ class TimeIndicator : public BaseIndicator
     };
 
     // Current hour equal to open trade hour
-    bool IsCurrentHourIsOpenHour()
+    bool IsCurrentHourOpenHour()
     {
         return GetCurrentHour() == _openTradeHour;
     };
 
     // Current hour equals to close trade hour
-    bool IsCurrentHourIsCloseHour()
+    bool IsCurrentHourCloseHour()
     {
         return GetCurrentHour() == _closeTradeHour;
     };
 
     // Range start hour <= Current time < Range end hour
-    bool IsCurrentTimeIsInRange()
+    bool IsCurrentTimeInRange()
     {
         int currentHour = GetCurrentHour();
         return _rangeStartHour <= currentHour && currentHour < _rangeEndHour;

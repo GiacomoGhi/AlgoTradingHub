@@ -15,6 +15,7 @@ class MovingAvarage : public BaseIndicator
     MovingAvarage(
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
+        BinFlags &produceSignalType,
         int period,
         int shift,
         ENUM_MA_METHOD method,
@@ -28,7 +29,7 @@ class MovingAvarage : public BaseIndicator
           _sellSignalType(sellSignal),
           _closeSellSignalType(sellSignalClose),
           // Call base class constructor
-          BaseIndicator(symbol, timeFrame)
+          BaseIndicator(symbol, timeFrame, &produceSignalType)
     {
         // Moving avarage handle
         _handle = iMA(
@@ -45,16 +46,16 @@ class MovingAvarage : public BaseIndicator
     {
         switch (signalType)
         {
-        case BuySignal:
+        case BUY_SIGNAL:
             return IsMovingAvarageValidSignal(_buySignalType);
 
-        case CloseBuySignal:
+        case CLOSE_BUY_SIGNAL:
             return IsMovingAvarageValidSignal(_closeBuySignalType);
 
-        case SellSignal:
+        case SELL_SIGNAL:
             return IsMovingAvarageValidSignal(_sellSignalType);
 
-        case CloseSellSignal:
+        case CLOSE_SELL_SIGNAL:
             return IsMovingAvarageValidSignal(_closeSellSignalType);
         default:
             return false;
@@ -103,13 +104,13 @@ class MovingAvarage : public BaseIndicator
     // Check if previous candle close price is above the moving avarage
     bool IsCloseAboveSignal()
     {
-        return this.GetClosePrice() > this.GetIndicatorSingleValue(_handle, 1);
+        return this.GetClosePrice() > this.GetIndicatorValue(_handle, 1);
     };
 
     // Check if previous candle close price is below the moving avarage
     bool IsCloseBelowSignal()
     {
-        return this.GetClosePrice() < this.GetIndicatorSingleValue(_handle, 1);
+        return this.GetClosePrice() < this.GetIndicatorValue(_handle, 1);
     };
 
     // Check if price previous close was below and price current close ss below

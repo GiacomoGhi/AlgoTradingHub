@@ -1,14 +1,14 @@
-#include "./ITradeSignal.mqh";
+#include "./BaseIndicator.mqh";
 
 // This class provides basic list functionalities plus it allows to check multiple signal validity
 class TradeSignalList
 {
   public:
-    ITradeSignal *Items[];
+    BaseIndicator *Items[];
 
   public:
     // Constructor
-    TradeSignalList(ITradeSignal &items[])
+    TradeSignalList(BaseIndicator &items[])
     {
         // Resize internal items array to match external items array
         int initialArrayLenght = ArraySize(items);
@@ -29,7 +29,7 @@ class TradeSignalList
     }
 
     // Add item to the list
-    void Add(ITradeSignal &item)
+    void Add(BaseIndicator &item)
     {
         // Add one spece to the array
         int newSize = ArraySize(Items) + 1;
@@ -47,7 +47,11 @@ class TradeSignalList
         bool isValid = true;
         for (int i = 0; i < ArraySize(Items); i++)
         {
-            isValid = isValid && Items[i].IsValidSignal(signalType);
+            BaseIndicator *currentItem = Items[i];
+            if (currentItem.ProduceSignal(signalType))
+            {
+                isValid = isValid && currentItem.IsValidSignal(signalType);
+            }
         }
 
         return isValid;

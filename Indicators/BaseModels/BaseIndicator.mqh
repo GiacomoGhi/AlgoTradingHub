@@ -1,45 +1,55 @@
-#include "./ITradeSignal.mqh";
-
-class BaseIndicator : public ITradeSignal
+#include "../../Libraries/BinFlags/BinFlags.mqh";
+#include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
+class BaseIndicator
 {
   protected:
     ENUM_TIMEFRAMES _timeFrame;
     string _symbol;
+    BinFlags *_produceSignalTypeFlags; // used for byte flag operations
 
   public:
     // Constructor
-    BaseIndicator(string symbol, ENUM_TIMEFRAMES timeFrame)
+    BaseIndicator(
+        string symbol,
+        ENUM_TIMEFRAMES timeFrame,
+        BinFlags &produceSignalType)
         : _symbol(symbol),
-          _timeFrame(timeFrame) {};
+          _timeFrame(timeFrame),
+          _produceSignalTypeFlags(&produceSignalType) {};
 
     // Return true if requested singnal type for child indicator is true else false
     virtual bool IsValidSignal(TradeSignalTypeEnum signalType)
     {
         // Implementation example:
-        // switch (signalType)
-        // {
-        // case BuySignal:
-        //     return IsIndicatorNameValidSignal(_buySignalType);
+        //     switch (signalType)
+        //     {
+        //          case BuySignal:
+        //              return IsIndicatorNameValidSignal(_buySignalType);
 
-        // case CloseBuySignal:
-        //     return IsIndicatorNameValidSignal(_closeBuySignalType);
+        //          case CloseBuySignal:
+        //              return IsIndicatorNameValidSignal(_closeBuySignalType);
 
-        // case SellSignal:
-        //     return IsIndicatorNameValidSignal(_sellSignalType);
+        //          case SellSignal:
+        //              return IsIndicatorNameValidSignal(_sellSignalType);
 
-        // case CloseSellSignal:
-        //     return IsIndicatorNameValidSignal(_closeSellSignalType);
-        // default:
-        //     return false;
-        // }
+        //          case CloseSellSignal:
+        //              return IsIndicatorNameValidSignal(_closeSellSignalType);
+        //          default:
+        //              return false;
+        //     }
 
-        Print("Base class method not implemented! Please implement this method in your child class");
+        Print("Base class method not implemented! Please implement this method in your class");
         return false;
     };
 
+    bool ProduceSignal(TradeSignalTypeEnum signalType)
+    {
+        return _produceSignalTypeFlags.HasFlag(signalType);
+    }
+
   protected:
     // Get a signle value of the indicator
-    double GetIndicatorSingleValue(int handle, int shift = 0, int bufferNumber = 1)
+    double GetIndicatorValue(int handle, int shift = 0, int bufferNumber = 1)
     {
         double valueContainer[1];
 
