@@ -1,16 +1,18 @@
 #include "./index.mqh";
 #include <Arrays/List.mqh>
 
-class SfhExpertAdvisor
+class ATHExpertAdvisor
 {
   private:
     TradeSignalList *_signalList;
+    ITradeLevelsIndicator *_tradeLevelsIndicator;
     ContextParams *_contextParams;
     TradeManager *_tradeManager;
+    RiskManager *_riskManager;
 
   public:
     // Constructor
-    SfhExpertAdvisor(
+    ATHExpertAdvisor(
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         TradeSignalList &signalList)
@@ -22,29 +24,30 @@ class SfhExpertAdvisor
         _tradeManager = new TradeManager(
             &contextParams,
             &tradeManagerParams);
-
-        // Initialize risk manager
-        // TODO
     };
 
     void OnTick()
     {
-        if (_signalList.IsValidSignal(BuySignal))
+        // TODO move this to Signal manager
+        if (_signalList.IsValidSignal(BUY_SIGNAL))
         {
             // Use trade manager class to open a buy trade or to place a buy stop/limit order
+            // _tradeManager.Execute(
+            //     BUY_POSITION,
+            //     _riskManager.get);
         }
 
-        if (_signalList.IsValidSignal(SellSignal))
+        if (_signalList.IsValidSignal(SELL_SIGNAL))
         {
             // Use trade manager class to open a sell trade or to place a sell stop/limit order
         }
 
-        if (_signalList.IsValidSignal(CloseBuySignal))
+        if (_signalList.IsValidSignal(CLOSE_BUY_SIGNAL))
         {
             // Use trade manager class to close buy trade
         }
 
-        if (_signalList.IsValidSignal(CloseSellSignal))
+        if (_signalList.IsValidSignal(CLOSE_SELL_SIGNAL))
         {
             // Use trade manager class to close sell trade
         }
