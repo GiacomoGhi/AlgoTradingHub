@@ -7,9 +7,7 @@ class RiskManager
 {
   private:
     ContextParams *_contextParams;
-    double _sizeValueOrPercentage;
-    double _maxDailyDrawDownPercentage;
-    double _maxOverallDrawDown;
+    RiskManagerParams *_params;
     CSymbolInfo _symbolInfo;
     CAccountInfo _accountInfo;
 
@@ -17,22 +15,26 @@ class RiskManager
     // Constructor
     RiskManager(ContextParams &contextParams, RiskManagerParams &riskManagerParams)
         : _contextParams(&contextParams),
-          _sizeValueOrPercentage(riskManagerParams.SizeValueOrPercentage),
-          _maxDailyDrawDownPercentage(riskManagerParams.MaxDailyDrawDownPercentage),
-          _maxOverallDrawDown(riskManagerParams.MaxOverallDrawDown)
+          _params(&riskManagerParams)
     {
         _symbolInfo.Name(contextParams.Symbol);
     }
 
-    // Return fixed position size
-    double GetPositionSize()
-    {
-        return _sizeValueOrPercentage;
-    }
-
     // Calcualte position size based on required risk percentage
-    double GetPositionSize(double entryPrice, double stopLossPrice)
+    double GetTradeVolume(double entryPrice = 0, double stopLossPrice = 0)
     {
+        // TODO perform size validation before returning
+
+        if (_params.SizeCalculationType == FIXED_LOT_SIZE)
+        {
+            return _params.SizeValueOrPercentage;
+        }
+        else if (_params.SizeCalculationType == FIXED_MONEY_AMOUNT)
+        {
+            // TODO implement logic
+            return 0;
+        }
+
         double stopSize = MathAbs(entryPrice - stopLossPrice);
 
         double calculatedProfit = 0;
@@ -45,7 +47,7 @@ class RiskManager
                 calculatedProfit))
         {
             // Calculate position risk based on balance and risk percentage
-            double positionRisk = _accountInfo.Balance() * (_sizeValueOrPercentage / 100);
+            double positionRisk = _accountInfo.Balance() * (_params.SizeValueOrPercentage / 100);
 
             // Calculate lots using calculated profit
             double calculatedLots = round(positionRisk * _symbolInfo.LotsMax() / (-calculatedProfit * _symbolInfo.LotsStep())) * _symbolInfo.LotsStep();
@@ -56,4 +58,9 @@ class RiskManager
         // TODO log an error
         return 0;
     }
+
+    // TODO implement max daily drowdown checks.
+    // TODO implement max overall drowdown checks.
+    // TODO implement position size validation.
+    // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
 }
