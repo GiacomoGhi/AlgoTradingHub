@@ -41,3 +41,4 @@ If you'd like to contribute to the development of this library, we welcome you t
 2. Submit pull requests with a clear explanation of the changes.
 3. Ensure that your contributions align with our mission and values.
 4. Discuss new ideas or features in the [Issues](https://github.com/yourrepo/issues) section before implementing.
+5. Make sure to follow our naming conventions and code formatting. We suggest you to install **ms-vscode.cpptools-extension-pack** and enable vscode option for auto formatting on save.
