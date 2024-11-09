@@ -16,5 +16,5 @@ enum TradeSignalTypeEnum
 /*
 Power of 2 enum for byte flags operations.
 See:
-   ¬/AlgoTradingHub/Libraries/BinFlas.mqh
+   ¬/AlgoTradingHub/Libraries/BinFlag/BinFlag.mqh
 */

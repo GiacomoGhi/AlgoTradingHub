@@ -1,11 +1,12 @@
 #include "../../Libraries/BinFlags/BinFlags.mqh";
 #include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
+
 class BaseIndicator
 {
   protected:
     ENUM_TIMEFRAMES _timeFrame;
     string _symbol;
-    BinFlags *_produceSignalTypeFlags; // used for byte flag operations
+    BinFlags *_produceSignalTypeFlags;
 
   public:
     // Constructor

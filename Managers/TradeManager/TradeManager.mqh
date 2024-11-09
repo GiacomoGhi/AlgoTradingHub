@@ -1,4 +1,3 @@
-#include "../../Indicators/BaseModels/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
 #include "../RiskManager/RiskManager.mqh"
 #include "./Models/TradeManagerParams.mqh";
@@ -69,11 +68,11 @@ class TradeManager
 
             _market.Sell(
                 _riskManager
-                    .GetTradeVolume(bidPrice, stopLoss), 
-                symbol, 
-                bidPrice, 
-                stopLoss, 
-                takeProfit, 
+                    .GetTradeVolume(bidPrice, stopLoss),
+                symbol,
+                bidPrice,
+                stopLoss,
+                takeProfit,
                 _comment);
         }
 

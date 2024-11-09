@@ -1,1 +1,4 @@
 .vscode
+
+# Ignore compilation test ex5 file
+*.ex5

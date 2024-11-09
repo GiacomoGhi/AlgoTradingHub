@@ -5,7 +5,6 @@ class ATHExpertAdvisor
 {
   private:
     TradeSignalList *_signalList;
-    ITradeLevelsIndicator *_tradeLevelsIndicator;
     ContextParams *_contextParams;
     TradeManager *_tradeManager;
     RiskManager *_riskManager;

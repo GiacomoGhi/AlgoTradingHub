@@ -5,3 +5,6 @@
 // Trade manager
 #include "./TradeManager/Models/TradeManagerParams.mqh";
 #include "./TradeManager/TradeManager.mqh";
+
+// Signal manager
+#include "./SignalManager/SignalManager.mqh";
