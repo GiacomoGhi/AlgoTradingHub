@@ -1,8 +1,8 @@
 enum TradePositionTypesEnum
 {
     // Buy position
-    BuyPosition,
+    BUY_POSITION,
 
     // Sell position
-    SellPosition,
+    SELL_POSITION,
 }

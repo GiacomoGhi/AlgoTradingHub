@@ -1,14 +1,14 @@
 enum TradeOrderTypesEnum
 {
     // Buy limit order
-    BuyLimitOrder,
+    BUY_LIMIT_ORDER,
 
     // Buy stop order
-    BuyStopOrder,
+    BUY_STOP_ORDER,
 
     // Sell limit order
-    SellLimitOrder,
+    SELL_LIMIT_ORDER,
 
     // Sell stop order
-    SellStopOrder,
+    SELL_STOP_ORDER,
 };
