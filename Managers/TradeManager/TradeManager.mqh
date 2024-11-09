@@ -1,4 +1,6 @@
+#include "../../Indicators/BaseModels/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
+#include "../RiskManager/RiskManager.mqh"
 #include "./Models/TradeManagerParams.mqh";
 #include "./Models/TradeOrderTypesEnum.mqh";
 #include "./Models/TradePositionTypesEnum.mqh";
@@ -14,6 +16,7 @@ class TradeManager
     string _comment;
 
     // Internal properties
+    RiskManager _riskManager;
     ulong _buyPositionTicket;
     ulong _sellPositionTicket;
 
@@ -22,11 +25,12 @@ class TradeManager
     TradeManager(ContextParams &contextParams, TradeManagerParams &tradeManagerParams)
         : _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
-          _comment(tradeManagerParams.Comment)
+          _comment(tradeManagerParams.Comment),
+          _riskManager(&contextParams, tradeManagerParams.RiskManagerParams)
     {
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
 
-        // Check for old positions or orders
+        // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
     };
@@ -34,23 +38,43 @@ class TradeManager
     // Open market position and check result code
     void Execute(
         TradePositionTypesEnum tradeTypeEnum,
-        double lotSize,
-        double stopLoss,
-        double takeProfit = 0)
+        double takeProfit,
+        double stopLoss)
     {
+        // TODO validate trade levels
+        // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
+
         // Normalize prices
         takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
         stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
 
         // Send trade
         string symbol = _contextParams.Symbol;
-        if (tradeTypeEnum == BuyPosition)
+        if (tradeTypeEnum == BUY_POSITION)
         {
-            _market.Buy(lotSize, symbol, GetAskPrice(), stopLoss, takeProfit, _comment);
+            double askPrice = GetAskPrice();
+
+            _market.Buy(
+                _riskManager
+                    .GetTradeVolume(askPrice, stopLoss),
+                symbol,
+                askPrice,
+                stopLoss,
+                takeProfit,
+                _comment);
         }
-        else if (tradeTypeEnum == SellPosition)
+        else if (tradeTypeEnum == SELL_POSITION)
         {
-            _market.Sell(lotSize, symbol, GetBidPrice(), stopLoss, takeProfit, _comment);
+            double bidPrice = GetBidPrice();
+
+            _market.Sell(
+                _riskManager
+                    .GetTradeVolume(bidPrice, stopLoss), 
+                symbol, 
+                bidPrice, 
+                stopLoss, 
+                takeProfit, 
+                _comment);
         }
 
         // Check result
@@ -61,7 +85,7 @@ class TradeManager
         }
 
         // Save position ticket
-        if (tradeTypeEnum == SellPosition)
+        if (tradeTypeEnum == SELL_POSITION)
         {
             _sellPositionTicket = _market.ResultDeal();
         }
@@ -74,35 +98,69 @@ class TradeManager
     // Place market order and check result code
     void Execute(
         TradeOrderTypesEnum tradeTypeEnum,
-        double lotSize,
-        double price,
+        double orderPrice,
+        double takeProfit,
         double stopLoss,
-        double takeProfit = 0,
         ENUM_ORDER_TYPE_TIME typeTime = ORDER_TIME_GTC,
         datetime expiration = 0)
     {
         // Normalize prices
         takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
         stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
-        price = NormalizeDouble(price, _contextParams.Digits);
+        orderPrice = NormalizeDouble(orderPrice, _contextParams.Digits);
+
+        // Get trade volume
+        double tradeVolume = _riskManager.GetTradeVolume(orderPrice, stopLoss);
 
         // Place order
         string symbol = _contextParams.Symbol;
-        if (tradeTypeEnum == BuyLimitOrder)
+        if (tradeTypeEnum == BUY_LIMIT_ORDER)
         {
-            _market.BuyLimit(lotSize, price, symbol, stopLoss, takeProfit, typeTime, expiration, _comment);
+            _market.BuyLimit(
+                tradeVolume,
+                orderPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                typeTime,
+                expiration,
+                _comment);
         }
-        else if (tradeTypeEnum == BuyStopOrder)
+        else if (tradeTypeEnum == BUY_STOP_ORDER)
         {
-            _market.BuyStop(lotSize, price, symbol, stopLoss, takeProfit, typeTime, expiration, _comment);
+            _market.BuyStop(
+                tradeVolume,
+                orderPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                typeTime,
+                expiration,
+                _comment);
         }
-        else if (tradeTypeEnum == SellLimitOrder)
+        else if (tradeTypeEnum == SELL_LIMIT_ORDER)
         {
-            _market.SellLimit(lotSize, price, symbol, stopLoss, takeProfit, typeTime, expiration, _comment);
+            _market.SellLimit(
+                tradeVolume,
+                orderPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                typeTime,
+                expiration,
+                _comment);
         }
-        else if (tradeTypeEnum == SellStopOrder)
+        else if (tradeTypeEnum == SELL_STOP_ORDER)
         {
-            _market.SellStop(lotSize, price, symbol, stopLoss, takeProfit, typeTime, expiration, _comment);
+            _market.SellStop(
+                tradeVolume,
+                orderPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                typeTime,
+                expiration,
+                _comment);
         }
 
         // Check result
@@ -112,13 +170,13 @@ class TradeManager
         }
 
         // Save order ticket
-        if (tradeTypeEnum == BuyLimitOrder || tradeTypeEnum == BuyStopOrder)
+        if (tradeTypeEnum == BUY_LIMIT_ORDER || tradeTypeEnum == BUY_STOP_ORDER)
         {
-            _sellPositionTicket = _market.ResultDeal();
+            _buyPositionTicket = _market.ResultDeal();
         }
         else
         {
-            _buyPositionTicket = _market.ResultDeal();
+            _sellPositionTicket = _market.ResultDeal();
         }
     }
 
@@ -126,12 +184,12 @@ class TradeManager
     void PositionClose(TradePositionTypesEnum tradeTypeEnum)
     {
         // Close buy
-        if (tradeTypeEnum == BuyPosition && IsBuyPositionOpen())
+        if (tradeTypeEnum == BUY_POSITION && IsBuyPositionOpen())
         {
             _market.PositionClose(_buyPositionTicket);
         }
         // Close sell
-        else if (tradeTypeEnum == SellPosition && IsSellPositionOpen())
+        else if (tradeTypeEnum == SELL_POSITION && IsSellPositionOpen())
         {
             _market.PositionClose(_sellPositionTicket);
         }
@@ -144,12 +202,12 @@ class TradeManager
     void OrderDelete(TradeOrderTypesEnum tradeTypeEnum)
     {
         // Delete buy order
-        if ((tradeTypeEnum == BuyLimitOrder || tradeTypeEnum == BuyLimitOrder) && IsBuyOrderPlaced())
+        if ((tradeTypeEnum == BUY_LIMIT_ORDER || tradeTypeEnum == BUY_STOP_ORDER) && IsBuyOrderPlaced())
         {
             _market.OrderDelete(_buyPositionTicket);
         }
         // Delete sell order
-        else if ((tradeTypeEnum == SellLimitOrder || tradeTypeEnum == SellStopOrder) && IsSellOrderPlaced())
+        else if (IsSellOrderPlaced())
         {
             _market.OrderDelete(_sellPositionTicket);
         }
