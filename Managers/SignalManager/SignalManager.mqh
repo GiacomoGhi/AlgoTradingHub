@@ -1,30 +1,60 @@
-#include "../../Indicators/BaseModels/TradeSignalList.mqh";
-#include "../../Libraries/List/ObjectList.mqh";
+#include "./Models/SignalManagerParams.mqh";
 
 class SignalManager
 {
-  private:
-    ObjectList<BaseIndicator> *_list;
+private:
+    ObjectList<ITradeSignal> *_tradeSingalsList;
 
-  public:
+public:
     // Constructor
-    SignalManager(ObjectList<BaseIndicator> &list)
-        : _list(&list)
+    SignalManager(SignalManagerParams &signalManagerParams)
+        : _tradeSingalsList(signalManagerParams.TradeSignalsList)
     {
     }
 
-    bool IsValidSignal(TradeSignalTypeEnum signalType)
+    // Checks indicators and return trading signals to execute.
+    BinFlags *GetSignalsToExecute()
     {
-        bool isValid = true;
-        for (int i = 0; i < _list.Count(); i++)
+        BinFlags binFlags = new BinFlags();
+        for (int signalType = TradeSignalTypeEnum::OPEN_BUY_MARKET;
+             signalType <= TradeSignalTypeEnum::DELETE_SELL_ORDER;
+             signalType *= 2)
         {
-            BaseIndicator *currentItem = _list[i];
-            if (currentItem.ProduceSignal(signalType))
+            if (this.IsValidSignal((TradeSignalTypeEnum)signalType))
             {
-                isValid = isValid && currentItem.IsValidSignal(signalType);
+                binFlags.SetFlag(signalType);
             }
         }
 
-        return isValid;
+        return &binFlags;
+    }
+
+private:
+    /**
+     * Retruns true if checked indicators are at least one and the amount of
+     * checked indicators is equal to the amount of indicators that were set to produce
+     * the provided signal
+     * */
+    bool IsValidSignal(TradeSignalTypeEnum signalType)
+    {
+        int validatedSignals = 0;
+        int totalTradeSinglasToCheck = _tradeSingalsList.Count();
+        for (int i = 0; i < _tradeSingalsList.Count(); i++)
+        {
+            ITradeSignal *tradeSignal = _tradeSingalsList[i];
+            if (tradeSignal.ProduceSignal(signalType))
+            {
+                if (tradeSignal.IsValidSignal(signalType))
+                {
+                    validatedSignals++;
+                }
+            }
+            else
+            {
+                // Reduce the amount of valid trade signals
+                totalTradeSinglasToCheck--;
+            }
+        }
+        return (validatedSignals > 0 && validatedSignals == totalTradeSinglasToCheck);
     };
 };
