@@ -40,7 +40,7 @@ Available operators:
 template <typename T>
 class ObjectList
 {
-  public:
+public:
     // construction, destruction, initialization, and assignment
     ObjectList(bool memdelete = true)
         : mdelete(memdelete)
@@ -234,7 +234,7 @@ class ObjectList
         return top;
     }
 
-  protected:
+protected:
     T *items[];
     T *mem[];
     bool mdelete;

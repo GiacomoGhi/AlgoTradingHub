@@ -5,13 +5,13 @@
 
 class RiskManager
 {
-  private:
+private:
     ContextParams *_contextParams;
     RiskManagerParams *_params;
     CSymbolInfo _symbolInfo;
     CAccountInfo _accountInfo;
 
-  public:
+public:
     // Constructor
     RiskManager(ContextParams &contextParams, RiskManagerParams &riskManagerParams)
         : _contextParams(&contextParams),

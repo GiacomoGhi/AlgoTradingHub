@@ -16,11 +16,9 @@ You can check, set, reset any number of flags.
 Multiple flags should be separated by '|'.
 /****************************************************************/
 
-// TODO reformat
-
 class BinFlags
 {
-  public:
+public:
     BinFlags()
         : mflags(NULL)
     {
@@ -51,7 +49,7 @@ class BinFlags
     }
     string Format();
 
-  protected:
+protected:
     int Bits()
     {
         int i = 0;
