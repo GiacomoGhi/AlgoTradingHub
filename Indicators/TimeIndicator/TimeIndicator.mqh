@@ -3,7 +3,7 @@
 
 class TimeIndicator : public BaseIndicator
 {
-  private:
+private:
     TimeIndicatorSignalsEnum _buySignalType;
     TimeIndicatorSignalsEnum _closeBuySignalType;
     TimeIndicatorSignalsEnum _sellSignalType;
@@ -13,7 +13,7 @@ class TimeIndicator : public BaseIndicator
     int _rangeStartHour;
     int _rangeEndHour;
 
-  public:
+public:
     // Constructor
     TimeIndicator(
         string symbol,
@@ -40,29 +40,29 @@ class TimeIndicator : public BaseIndicator
     {
     }
 
-    // Base class methods override
-    virtual bool IsValidSignal(TradeSignalTypeEnum signalType) override
+    // Base class ITradeSignal implementation
+    bool IsValidSignal(TradeSignalTypeEnum signalType) override
     {
         switch (signalType)
         {
-        case BUY_SIGNAL:
-            return IsTimeIndicatorValidSignal(_buySignalType);
+        // case BUY_SIGNAL:
+        //     return IsTimeIndicatorValidSignal(_buySignalType);
 
-        case CLOSE_BUY_SIGNAL:
-            return IsTimeIndicatorValidSignal(_closeBuySignalType);
+        // case CLOSE_BUY_SIGNAL:
+        //     return IsTimeIndicatorValidSignal(_closeBuySignalType);
 
-        case SELL_SIGNAL:
-            return IsTimeIndicatorValidSignal(_sellSignalType);
+        // case SELL_SIGNAL:
+        //     return IsTimeIndicatorValidSignal(_sellSignalType);
 
-        case CLOSE_SELL_SIGNAL:
-            return IsTimeIndicatorValidSignal(_closeSellSignalType);
+        // case CLOSE_SELL_SIGNAL:
+        //     return IsTimeIndicatorValidSignal(_closeSellSignalType);
         default:
             return false;
         }
     };
 
     // Private methods
-  private:
+private:
     // Return signal method result given a signal type
     bool IsTimeIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)
     {

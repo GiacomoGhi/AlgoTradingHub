@@ -3,14 +3,14 @@
 
 class MovingAvarage : public BaseIndicator
 {
-  private:
+private:
     MovingAvarageSignalsEnum _buySignalType;
     MovingAvarageSignalsEnum _closeBuySignalType;
     MovingAvarageSignalsEnum _sellSignalType;
     MovingAvarageSignalsEnum _closeSellSignalType;
     int _handle;
 
-  public:
+public:
     // Constructor
     MovingAvarage(
         string symbol,
@@ -41,29 +41,29 @@ class MovingAvarage : public BaseIndicator
             appliedPrice);
     }
 
-    // Base class methods override
-    virtual bool IsValidSignal(TradeSignalTypeEnum signalType) override
+    // Base class ITradeSignal implementation
+    bool IsValidSignal(TradeSignalTypeEnum signalType) override
     {
         switch (signalType)
         {
-        case BUY_SIGNAL:
+        case OPEN_BUY_MARKET:
             return IsMovingAvarageValidSignal(_buySignalType);
 
-        case CLOSE_BUY_SIGNAL:
-            return IsMovingAvarageValidSignal(_closeBuySignalType);
+        // case CLOSE_BUY_SIGNAL:
+        //     return IsMovingAvarageValidSignal(_closeBuySignalType);
 
-        case SELL_SIGNAL:
-            return IsMovingAvarageValidSignal(_sellSignalType);
+        // case SELL_SIGNAL:
+        //     return IsMovingAvarageValidSignal(_sellSignalType);
 
-        case CLOSE_SELL_SIGNAL:
-            return IsMovingAvarageValidSignal(_closeSellSignalType);
+        // case CLOSE_SELL_SIGNAL:
+        //     return IsMovingAvarageValidSignal(_closeSellSignalType);
         default:
             return false;
         }
     };
 
     // Private methods
-  private:
+private:
     // Return signal method result given a signal type
     bool IsMovingAvarageValidSignal(MovingAvarageSignalsEnum signalType)
     {

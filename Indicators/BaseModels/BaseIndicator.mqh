@@ -1,15 +1,17 @@
 #include "../../Libraries/BinFlags/BinFlags.mqh";
-#include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
+#include "../../Shared/Interfaces/ITradeSignal.mqh";
 
-class BaseIndicator
+class BaseIndicator : public ITradeSignal
 {
-  protected:
+protected:
     ENUM_TIMEFRAMES _timeFrame;
     string _symbol;
     BinFlags *_produceSignalTypeFlags;
 
-  public:
-    // Constructor
+public:
+    /**
+     * Constructor
+     * */
     BaseIndicator(
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
@@ -18,37 +20,15 @@ class BaseIndicator
           _timeFrame(timeFrame),
           _produceSignalTypeFlags(&produceSignalType) {};
 
-    // Return true if requested singnal type for child indicator is true else false
-    virtual bool IsValidSignal(TradeSignalTypeEnum signalType)
-    {
-        // Implementation example:
-        //     switch (signalType)
-        //     {
-        //          case BuySignal:
-        //              return IsIndicatorNameValidSignal(_buySignalType);
-
-        //          case CloseBuySignal:
-        //              return IsIndicatorNameValidSignal(_closeBuySignalType);
-
-        //          case SellSignal:
-        //              return IsIndicatorNameValidSignal(_sellSignalType);
-
-        //          case CloseSellSignal:
-        //              return IsIndicatorNameValidSignal(_closeSellSignalType);
-        //          default:
-        //              return false;
-        //     }
-
-        Print("Base class method not implemented! Please implement this method in your class");
-        return false;
-    };
-
+    /**
+     * Checks if indicator is set to produce given signal
+     * */
     bool ProduceSignal(TradeSignalTypeEnum signalType)
     {
         return _produceSignalTypeFlags.HasFlag(signalType);
     }
 
-  protected:
+protected:
     // Get a signle value of the indicator
     double GetIndicatorValue(int handle, int shift = 0, int bufferNumber = 1)
     {
