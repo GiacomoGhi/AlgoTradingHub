@@ -1,9 +1,9 @@
 #include "../../RiskManager/Models/RiskManagerParams.mqh";
 class TradeManagerParams
 {
-  public:
-    ulong MagicNumber;
-    string Comment;
+public:
+    const ulong MagicNumber;
+    const string Comment;
     RiskManagerParams *RiskManagerParams;
 
     TradeManagerParams(

@@ -1,9 +1,9 @@
 class ContextParams
 {
-  public:
-    string Symbol;
-    double Points;
-    int Digits;
+public:
+    const string Symbol;
+    const double Points;
+    const int Digits;
 
     // Constructor
     ContextParams(

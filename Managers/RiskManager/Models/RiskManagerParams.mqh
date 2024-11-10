@@ -2,11 +2,11 @@
 
 class RiskManagerParams
 {
-  public:
-    double SizeValueOrPercentage;
-    double MaxDailyDrawDownPercentage;
-    double MaxOverallDrawDown;
-    SizeCalculationTypeEnum SizeCalculationType;
+public:
+    const double SizeValueOrPercentage;
+    const double MaxDailyDrawDownPercentage;
+    const double MaxOverallDrawDown;
+    const SizeCalculationTypeEnum SizeCalculationType;
 
     // Contructor by copy
     RiskManagerParams(RiskManagerParams &riskManagerParams)
