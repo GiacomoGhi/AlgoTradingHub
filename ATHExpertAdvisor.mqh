@@ -3,19 +3,19 @@
 
 class ATHExpertAdvisor
 {
-  private:
-    TradeSignalList *_signalList;
+private:
+    SignalManager *_signalManager;
     ContextParams *_contextParams;
     TradeManager *_tradeManager;
     RiskManager *_riskManager;
 
-  public:
+public:
     // Constructor
     ATHExpertAdvisor(
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        TradeSignalList &signalList)
-        : _signalList(&signalList),
+        SignalManager &signalManager)
+        : _signalManager(&signalManager),
           _contextParams(&contextParams)
     {
 
@@ -27,28 +27,12 @@ class ATHExpertAdvisor
 
     void OnTick()
     {
-        // TODO move this to Signal manager
-        if (_signalList.IsValidSignal(BUY_SIGNAL))
-        {
-            // Use trade manager class to open a buy trade or to place a buy stop/limit order
-            // _tradeManager.Execute(
-            //     BUY_POSITION,
-            //     _riskManager.get);
-        }
-
-        if (_signalList.IsValidSignal(SELL_SIGNAL))
-        {
-            // Use trade manager class to open a sell trade or to place a sell stop/limit order
-        }
-
-        if (_signalList.IsValidSignal(CLOSE_BUY_SIGNAL))
-        {
-            // Use trade manager class to close buy trade
-        }
-
-        if (_signalList.IsValidSignal(CLOSE_SELL_SIGNAL))
-        {
-            // Use trade manager class to close sell trade
-        }
+        /**
+         * TODO
+         * Use SignalManager to check what kind of signal need to be processed;
+         * Execute signals returned in the BinFlags obj; use ITradeLevels Obj
+         * where needed to get trading Levels such as TP and SL
+         * use trade manager to execute the trades
+         * */
     }
 }
