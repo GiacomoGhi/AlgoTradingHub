@@ -1,12 +1,9 @@
-// TODO update this, should be only one method that returns the TradeLevels object
+#include "../Models/TradeLevels.mqh";
+
 interface ITradeLevelsIndicator
 {
-    // Returns market price for the take profit.
-    double GetTakeProfitPrice();
-
-    // Returns market price for the stop loss.
-    double GetStopLossPrice();
-
-    // Return order market price.
-    double GetOrderPrice();
+    /**
+     * Returns trade levels object.
+     */
+    TradeLevels *GetTradeLevels();
 }

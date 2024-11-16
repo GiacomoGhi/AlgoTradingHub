@@ -4,7 +4,7 @@ interface ITradeSignal
 {
     /**
      * Checks if indicator is set to produce given signal
-     * */
+     */
     bool ProduceSignal(TradeSignalTypeEnum signalType);
 
     /**
