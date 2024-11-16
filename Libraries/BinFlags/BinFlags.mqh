@@ -1,3 +1,5 @@
+#include "../List/BasicList.mqh";
+
 /****************************************************************
 Binary Flags
 https://www.mql5.com/en/code/29480
@@ -20,7 +22,7 @@ class BinFlags
 {
 public:
     BinFlags()
-        : mflags(NULL)
+        : mflags(0)
     {
     }
     BinFlags(int flags)
@@ -39,6 +41,17 @@ public:
     {
         return (mflags & (flags)) == flags;
     }
+    bool HasAnyFlag(BasicList<int> *flagsList)
+    {
+        for (int i = 0; i < flagsList.Count(); i++)
+        {
+            if (HasFlag(flagsList.Get(i)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     void SetFlag(int flags)
     {
         mflags |= (flags);
@@ -46,6 +59,10 @@ public:
     void ResetFlag(int flags)
     {
         mflags &= ~(flags);
+    }
+    void Clear()
+    {
+        mflags = 0;
     }
     string Format();
 
@@ -76,9 +93,8 @@ string BinFlags::Format()
     }
     return format;
 }
-/**/
 
-/*
+/**
 Example of BinFalgs usage.
 #include "BinFlags.mqh"
 enum ENUM_EXAMPLE_FLAGS {A=0x1,B=0x2,C=0x4,D=0x8};
