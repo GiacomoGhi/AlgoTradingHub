@@ -1,47 +1,65 @@
 #include "./Models/SignalManagerParams.mqh";
+#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 
-class SignalManager
+class SignalManager : public ITradeSignalTypeEnumHelperStrategy
 {
 private:
-    ObjectList<ITradeSignal> *_tradeSingalsList;
+    ObjectList<ITradeSignal> *_tradeSignalsList;
+    BinFlags _binFlags;
 
 public:
-    // Constructor
+    /**
+     * Constructor
+     * @param signalManagerParams Parameters containing the trade signals list.
+     */
     SignalManager(SignalManagerParams &signalManagerParams)
-        : _tradeSingalsList(signalManagerParams.TradeSignalsList)
+        : _tradeSignalsList(signalManagerParams.TradeSignalsList)
+        :
     {
     }
 
-    // Checks indicators and return trading signals to execute.
+    /**
+     * Checks indicators and returns the trading signals to execute.
+     * @return Pointer to BinFlags containing the signals to execute.
+     */
     BinFlags *GetSignalsToExecute()
     {
-        BinFlags binFlags = new BinFlags();
-        for (int signalType = TradeSignalTypeEnum::OPEN_BUY_MARKET;
-             signalType <= TradeSignalTypeEnum::DELETE_SELL_ORDER;
-             signalType *= 2)
-        {
-            if (this.IsValidSignal((TradeSignalTypeEnum)signalType))
-            {
-                binFlags.SetFlag(signalType);
-            }
-        }
-
-        return &binFlags;
+        // Clear previous flags
+        _binFlags.Clear();
+        
+        // Execute this.ForEachAlgorithmInterface()
+        // For each value of the enum TradeSignalTypeEnum
+        TradeSignalTypeEnumHelper::ForEach(&this);
+        
+        return &_binFlags;
     }
+
+    /**
+     * ITradeSignalTypeEnumHelperStrategy method implementation
+     * Iterates over each signal type and sets the corresponding flag if valid.
+     * @param signalType The signal type to process.
+     */
+    void ForEachAlgorithmInterface(int signalType)
+    {
+        if (this.IsValidSignal((TradeSignalTypeEnum)signalType))
+        {
+            _binFlags.SetFlag(signalType);
+        }
+    }    
 
 private:
     /**
-     * Retruns true if checked indicators are at least one and the amount of
-     * checked indicators is equal to the amount of indicators that were set to produce
-     * the provided signal
-     * */
+     * Validates a signal based on the indicators in the trade signals list.
+     * @param signalType The signal type to validate.
+     * @return True if the signal is valid, false otherwise.
+     */
     bool IsValidSignal(TradeSignalTypeEnum signalType)
     {
         int validatedSignals = 0;
-        int totalTradeSinglasToCheck = _tradeSingalsList.Count();
-        for (int i = 0; i < _tradeSingalsList.Count(); i++)
+        int totalTradeSignalsToCheck = _tradeSignalsList.Count();
+        for (int i = 0; i < _tradeSignalsList.Count(); i++)
         {
-            ITradeSignal *tradeSignal = _tradeSingalsList[i];
+            ITradeSignal *tradeSignal = _tradeSignalsList[i];
             if (tradeSignal.ProduceSignal(signalType))
             {
                 if (tradeSignal.IsValidSignal(signalType))
@@ -52,9 +70,11 @@ private:
             else
             {
                 // Reduce the amount of valid trade signals
-                totalTradeSinglasToCheck--;
+                totalTradeSignalsToCheck--;
             }
         }
-        return (validatedSignals > 0 && validatedSignals == totalTradeSinglasToCheck);
+        
+        // Signal is valid if at least one is validated, and all required signals are checked
+        return (validatedSignals > 0 && validatedSignals == totalTradeSignalsToCheck);
     };
 };
