@@ -331,12 +331,11 @@ void ObjectList::RemoveAll(bool del = 0)
     }
     ArrayFree(items);
 }
-/**/
 
 /****************************************************************
 Example of ObjectList usage
 /****************************************************************/
-/*
+/**
 void OnStart()
   {
    ObjectList<A>list;
@@ -386,4 +385,4 @@ Output:
    2097152
    2097152
    false
-/**/
+*/

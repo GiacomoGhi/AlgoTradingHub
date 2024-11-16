@@ -3,6 +3,11 @@
  * Use power of 2 enum for byte flags operations.
  * See:
  *    ¬/AlgoTradingHub/Libraries/BinFlag/BinFlag.mqh
+ * 
+ * Notes: 
+ * 
+ * if any signal type is added, also update 
+ * "¬/AlgoTradingHub/Shared/Helpers/TradeSignalTypeEnumHelper.mqh" 
  */
 enum TradeSignalTypeEnum
 {

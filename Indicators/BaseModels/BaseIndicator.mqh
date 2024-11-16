@@ -11,7 +11,7 @@ protected:
 public:
     /**
      * Constructor
-     * */
+     */
     BaseIndicator(
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
@@ -22,7 +22,7 @@ public:
 
     /**
      * Checks if indicator is set to produce given signal
-     * */
+     */
     bool ProduceSignal(TradeSignalTypeEnum signalType)
     {
         return _produceSignalTypeFlags.HasFlag(signalType);
