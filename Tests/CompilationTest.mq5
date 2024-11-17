@@ -1,4 +1,5 @@
 #include "../index.mqh";
+#include "../ATHExpertAdvisor.mqh";
 /**
  * This file was needed to check if classes were actually compiling
  * The introduction of templates brought some confusion since
@@ -15,7 +16,7 @@ void OnStart()
     BinFlags binFlags = new BinFlags();
     binFlags.SetFlag(TradeSignalTypeEnum::OPEN_BUY_MARKET);
     binFlags.SetFlag(TradeSignalTypeEnum::OPEN_SELL_MARKET);
-    
+
     ObjectList<ITradeSignal> objectList;
     objectList.Append(new MovingAvarage(
         "Test",
@@ -44,7 +45,22 @@ void OnStart()
         AlwaysTrue,
         AlwaysTrue);
 
-    // Managers
+    // Signal manager
     SignalManagerParams *signalManagerParams = new SignalManagerParams(&objectList, 123);
     SignalManager *signalManager = new SignalManager(signalManagerParams);
+
+    ContextParams *contextParams = new ContextParams("Test", 1, 1);
+    // Risk manager
+    RiskManagerParams *riskManagerParams = new RiskManagerParams(1, 100, 100, FIXED_LOT_SIZE);
+    RiskManager *riskManager = new RiskManager(contextParams, riskManagerParams);
+
+    // Trade manager
+    TradeManagerParams *tradeManagerParams = new TradeManagerParams(123, "ATH", riskManagerParams);
+    TradeManager *tradeManager = new TradeManager(contextParams, tradeManagerParams);
+
+    // ATH Expert advisor
+    ATHExpertAdvisor *athExpertAdvisor = new ATHExpertAdvisor(
+        contextParams,
+        tradeManagerParams,
+        signalManagerParams);
 }
