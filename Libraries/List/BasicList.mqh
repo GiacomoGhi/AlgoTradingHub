@@ -69,6 +69,18 @@ public:
         }
         return -1;
     }
+    bool Contains(T item)
+    {
+        int c = Count();
+        for (int i = 0; i < c; i++)
+        {
+            if (item == items[i])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     void Print()
     {
         int c = ArraySize(items);
