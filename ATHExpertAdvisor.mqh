@@ -2,14 +2,12 @@
 #include <Arrays/List.mqh>
 
 // TODO decontructors everywhere!!!!
-class ATHExpertAdvisor : public ITradeSignalTypeEnumHelperStrategy
+class ATHExpertAdvisor
 {
 private:
-    SignalManager *_signalManager;
     ContextParams *_contextParams;
+    SignalManager *_signalManager;
     TradeManager *_tradeManager;
-    RiskManager *_riskManager;
-    BinFlags *_signalsToExecute;
     ITradeLevelsIndicator *_tradeLevelsIndicator;
 
 public:
@@ -17,39 +15,22 @@ public:
     ATHExpertAdvisor(
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        RiskManagerParams &riskManagerParams,
         SignalManagerParams &signalManagerParams)
         : _contextParams(&contextParams)
     {
-
-        // Trade manager init
+        // Trade manager
         _tradeManager = new TradeManager(
             &contextParams,
             &tradeManagerParams);
 
-        // Risk manager init
-        _riskManager = new RiskManager(
-            &contextParams,
-            &riskManagerParams);
-
-        // Signal manager init
+        // Signal manager
         _signalManager = new SignalManager(
             &signalManagerParams);
     };
 
     void OnTick()
     {
-        // Gets signals that needs to be executed
-        _signalsToExecute = _signalManager.GetSignalsToExecute();
-
-        if (_signalsToExecute.Read() == 0)
-        {
-            return;
-        }
-
-        // Execute this.ForEachAlgorithmInterface()
-        // For each value of the enum TradeSignalTypeEnum
-        TradeSignalTypeEnumHelper::ForEach(&this);
+        this.ExecuteSignals();
 
         /**
          * use ITradeLevels Obj
@@ -58,80 +39,61 @@ public:
          */
     }
 
-    /**
-     * ITradeSignalTypeEnumHelperStrategy method implementation
-     * Iterates over each signal type and checks if signal is to be executed.
-     * @param signalType The signal type to process.
-     */
-    void ForEachAlgorithmInterface(int signalType)
-    {
-        if (_signalsToExecute.HasFlag(signalType))
-        {
-            // TODO
-            //  Execute signals
-            this.ExecuteSignal((TradeSignalTypeEnum)signalType);
-        }
-    }
-
 private:
     /**
-     * Execute provided signal
+     * Gets and execute signals from signal manager
      */
-    void ExecuteSignal(TradeSignalTypeEnum signalType)
+    void ExecuteSignals()
     {
-        // Prepare trade levels
-        BasicList<int> openTypesValues = TradeSignalTypeEnumHelper::GetOpenTypesValues();
-        TradeLevels *tradeLevels;
-        if (_signalsToExecute.HasAnyFlag(&openTypesValues))
+        // Gets signals that needs to be executed
+        BasicList<int> *signalsToExecute = _signalManager.GetSignalsToExecute();
+
+        if (signalsToExecute.Count() == 0)
         {
-            tradeLevels = _tradeLevelsIndicator.GetTradeLevels();
+            return;
         }
 
-        switch (signalType)
+        // First thing first, close trades or delete open orders
+        if (signalsToExecute.Contains(CLOSE_BUY_MARKET))
         {
-        case OPEN_BUY_MARKET:
-            /** code */
-            break;
+            _tradeManager.Execute(CLOSE_BUY_MARKET);
+            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+        }
 
-        case OPEN_BUY_LIMIT_ORDER:
-            /** code */
-            break;
+        if (signalsToExecute.Contains(DELETE_BUY_ORDER))
+        {
+            _tradeManager.Execute(DELETE_BUY_ORDER);
+            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+        }
 
-        case OPEN_BUY_STOP_ORDER:
-            /** code */
-            break;
+        if (signalsToExecute.Contains(CLOSE_SELL_MARKET))
+        {
+            _tradeManager.Execute(CLOSE_SELL_MARKET);
+            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+        }
 
-        case CLOSE_BUY_MARKET:
-            /** code */
-            break;
+        if (signalsToExecute.Contains(DELETE_SELL_ORDER))
+        {
+            _tradeManager.Execute(DELETE_SELL_ORDER);
+            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+        }
 
-        case DELETE_BUY_ORDER:
-            /** code */
-            break;
+        // All close and delete type signals have been executed,
+        // Check if there are any open type signal yet to execute
+        if (signalsToExecute.Count() == 0)
+        {
+            return;
+        }
 
-        case OPEN_SELL_MARKET:
-            /** code */
-            break;
+        // TODO this should be moved inside the for loop
+        // TODO trade levels should be get based on TradeSignalTypeEnum
+        TradeLevels *tradeLevels = _tradeLevelsIndicator.GetTradeLevels();
 
-        case OPEN_SELL_LIMIT_ORDER:
-            /** code */
-            break;
-
-        case OPEN_SELL_STOP_ORDER:
-            /** code */
-            break;
-
-        case CLOSE_SELL_MARKET:
-            /** code */
-            break;
-
-        case DELETE_SELL_ORDER:
-            /** code */
-            break;
-
-        default:
-            // TODO use logger to print "Unhadled singal error"
-            break;
+        for (int i = 0; i < signalsToExecute.Count(); i++)
+        {
+            _tradeManager.Execute(
+                (TradeSignalTypeEnum)signalsToExecute.Get(i),
+                tradeLevels);
         }
     }
 }
