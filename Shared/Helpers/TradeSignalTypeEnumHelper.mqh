@@ -48,7 +48,7 @@ public:
 
     /**
      * Gets all enumerator values that
-     * rappresents an open signal
+     * rappresents an open signal.
      */
     static BasicList<int> *GetOpenTypesValues()
     {
@@ -62,5 +62,29 @@ public:
         list.Append((int)TradeSignalTypeEnum::OPEN_SELL_STOP_ORDER);
 
         return list;
+    }
+
+    /**
+     * Returns true if signal type is of type: OPEN_* .
+     * */
+    static bool IsOpenType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_BUY_MARKET || signalType == OPEN_BUY_LIMIT_ORDER || signalType == OPEN_BUY_STOP_ORDER || signalType == OPEN_SELL_MARKET || signalType == OPEN_SELL_LIMIT_ORDER || signalType == OPEN_SELL_STOP_ORDER;
+    }
+
+    /**
+     * Returns true if signal type is of type: *_MARKET .
+     * */
+    static bool IsMarketType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_BUY_MARKET || signalType == CLOSE_BUY_MARKET || signalType == OPEN_SELL_MARKET || signalType == CLOSE_SELL_MARKET;
+    }
+
+    /**
+     * Returns true if signal type is OPEN_BUY_MARKET or OPEN_SELL_MARKET.
+     * */
+    static bool IsOpenAtMarketType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_BUY_MARKET || signalType == OPEN_SELL_MARKET;
     }
 };
