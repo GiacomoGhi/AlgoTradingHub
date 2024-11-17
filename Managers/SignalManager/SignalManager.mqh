@@ -5,7 +5,7 @@ class SignalManager : public ITradeSignalTypeEnumHelperStrategy
 {
 private:
     ObjectList<ITradeSignal> *_tradeSignalsList;
-    BinFlags _binFlags;
+    BasicList<int> _signalsToExecute;
 
 public:
     /**
@@ -14,7 +14,6 @@ public:
      */
     SignalManager(SignalManagerParams &signalManagerParams)
         : _tradeSignalsList(signalManagerParams.TradeSignalsList)
-        :
     {
     }
 
@@ -22,16 +21,16 @@ public:
      * Checks indicators and returns the trading signals to execute.
      * @return Pointer to BinFlags containing the signals to execute.
      */
-    BinFlags *GetSignalsToExecute()
+    BasicList<int> *GetSignalsToExecute()
     {
-        // Clear previous flags
-        _binFlags.Clear();
-        
+        // Clear previous signals
+        _signalsToExecute.RemoveAll();
+
         // Execute this.ForEachAlgorithmInterface()
         // For each value of the enum TradeSignalTypeEnum
         TradeSignalTypeEnumHelper::ForEach(&this);
-        
-        return &_binFlags;
+
+        return &_signalsToExecute;
     }
 
     /**
@@ -43,9 +42,9 @@ public:
     {
         if (this.IsValidSignal((TradeSignalTypeEnum)signalType))
         {
-            _binFlags.SetFlag(signalType);
+            _signalsToExecute.Append(signalType);
         }
-    }    
+    }
 
 private:
     /**
@@ -55,25 +54,29 @@ private:
      */
     bool IsValidSignal(TradeSignalTypeEnum signalType)
     {
+        // Validated singals counter
         int validatedSignals = 0;
+
+        // Total amount of singals that needs to be valid
         int totalTradeSignalsToCheck = _tradeSignalsList.Count();
+
+        // Valodate signal for each signal provider
         for (int i = 0; i < _tradeSignalsList.Count(); i++)
         {
             ITradeSignal *tradeSignal = _tradeSignalsList[i];
-            if (tradeSignal.ProduceSignal(signalType))
+            if (!tradeSignal.ProduceSignal(signalType))
             {
-                if (tradeSignal.IsValidSignal(signalType))
-                {
-                    validatedSignals++;
-                }
-            }
-            else
-            {
-                // Reduce the amount of valid trade signals
+                // Reduce the amount of trade signals that needs to be valid
                 totalTradeSignalsToCheck--;
+                continue;
+            }
+
+            if (tradeSignal.IsValidSignal(signalType))
+            {
+                validatedSignals++;
             }
         }
-        
+
         // Signal is valid if at least one is validated, and all required signals are checked
         return (validatedSignals > 0 && validatedSignals == totalTradeSignalsToCheck);
     };
