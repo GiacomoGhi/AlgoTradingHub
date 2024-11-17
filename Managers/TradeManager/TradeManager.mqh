@@ -1,13 +1,13 @@
 #include "../../Shared/Models/ContextParams.mqh";
+#include "../../Shared/Models/TradeLevels.mqh";
+#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../RiskManager/RiskManager.mqh"
 #include "./Models/TradeManagerParams.mqh";
-#include "./Models/TradeOrderTypesEnum.mqh";
-#include "./Models/TradePositionTypesEnum.mqh";
 #include <Trade/Trade.mqh>;
 
 class TradeManager
 {
-  private:
+private:
     // Constructor init
     ContextParams *_contextParams;
     CTrade _market;
@@ -19,7 +19,7 @@ class TradeManager
     ulong _buyPositionTicket;
     ulong _sellPositionTicket;
 
-  public:
+public:
     // Constructor
     TradeManager(ContextParams &contextParams, TradeManagerParams &tradeManagerParams)
         : _contextParams(&contextParams),
@@ -29,190 +29,91 @@ class TradeManager
     {
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
 
+        // TODO Manage only positions or orders from context settings
         // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
     };
 
-    // Open market position and check result code
-    void Execute(
-        TradePositionTypesEnum tradeTypeEnum,
-        double takeProfit,
-        double stopLoss)
+    // Close or delete singals only,
+    // overload with TradeLevels to execute a new position or order.
+    void Execute(TradeSignalTypeEnum signalType)
     {
+        if (TradeSignalTypeEnumHelper::IsOpenType(signalType))
+        {
+            // TODO log error: "Unsupported operation type"
+            return;
+        }
+
+        // Close market position
+        if (TradeSignalTypeEnumHelper::IsMarketType(signalType))
+        {
+            // Close buy
+            if (signalType == CLOSE_BUY_MARKET && IsBuyPositionOpen())
+            {
+                _market.PositionClose(_buyPositionTicket);
+            }
+            // Close sell
+            else if (signalType == CLOSE_SELL_MARKET && IsSellPositionOpen())
+            {
+                _market.PositionClose(_sellPositionTicket);
+            }
+        }
+        // Delete order
+        else
+        {
+            // Delete buy order
+            if (signalType == DELETE_BUY_ORDER && IsBuyOrderPlaced())
+            {
+                _market.OrderDelete(_buyPositionTicket);
+            }
+            // Delete sell order
+            else if (signalType == DELETE_SELL_ORDER && IsSellOrderPlaced())
+            {
+                _market.OrderDelete(_sellPositionTicket);
+            }
+        }
+
+        // Check result
+        IsResultRetcode(TRADE_RETCODE_DONE);
+    }
+
+    // Open a new position or order in the market.
+    void Execute(TradeSignalTypeEnum signalType, TradeLevels &tradeLevels)
+    {
+        // Exit if signal is not for and "open" type
+        if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
+        {
+            // TODO log error: "Unsupported operation type"
+            return;
+        }
+        // If open at market type, execute it and then exit
+        else if (TradeSignalTypeEnumHelper::IsOpenAtMarketType(signalType))
+        {
+            // TODO validate trade levels
+            // Execute market position
+            this.ExecuteInternal(
+                signalType,
+                tradeLevels.TakeProfit,
+                tradeLevels.StopLoss);
+
+            return;
+        }
+        // Exit if entry price is not set
+        else if (tradeLevels.OrderEntryPrice)
+        {
+            // TODO log error: "Must set entry price"
+            return;
+        }
+
         // TODO validate trade levels
-        // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
-
-        // Normalize prices
-        takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
-        stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
-
-        // Send trade
-        string symbol = _contextParams.Symbol;
-        if (tradeTypeEnum == BUY_POSITION)
-        {
-            double askPrice = GetAskPrice();
-
-            _market.Buy(
-                _riskManager
-                    .GetTradeVolume(askPrice, stopLoss),
-                symbol,
-                askPrice,
-                stopLoss,
-                takeProfit,
-                _comment);
-        }
-        else if (tradeTypeEnum == SELL_POSITION)
-        {
-            double bidPrice = GetBidPrice();
-
-            _market.Sell(
-                _riskManager
-                    .GetTradeVolume(bidPrice, stopLoss),
-                symbol,
-                bidPrice,
-                stopLoss,
-                takeProfit,
-                _comment);
-        }
-
-        // Check result
-        if (!IsResultRetcode(TRADE_RETCODE_DONE))
-        {
-            // TODO Use logger manager to log an error
-            return;
-        }
-
-        // Save position ticket
-        if (tradeTypeEnum == SELL_POSITION)
-        {
-            _sellPositionTicket = _market.ResultDeal();
-        }
-        else
-        {
-            _buyPositionTicket = _market.ResultDeal();
-        }
-    }
-
-    // Place market order and check result code
-    void Execute(
-        TradeOrderTypesEnum tradeTypeEnum,
-        double orderPrice,
-        double takeProfit,
-        double stopLoss,
-        ENUM_ORDER_TYPE_TIME typeTime = ORDER_TIME_GTC,
-        datetime expiration = 0)
-    {
-        // Normalize prices
-        takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
-        stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
-        orderPrice = NormalizeDouble(orderPrice, _contextParams.Digits);
-
-        // Get trade volume
-        double tradeVolume = _riskManager.GetTradeVolume(orderPrice, stopLoss);
-
-        // Place order
-        string symbol = _contextParams.Symbol;
-        if (tradeTypeEnum == BUY_LIMIT_ORDER)
-        {
-            _market.BuyLimit(
-                tradeVolume,
-                orderPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                typeTime,
-                expiration,
-                _comment);
-        }
-        else if (tradeTypeEnum == BUY_STOP_ORDER)
-        {
-            _market.BuyStop(
-                tradeVolume,
-                orderPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                typeTime,
-                expiration,
-                _comment);
-        }
-        else if (tradeTypeEnum == SELL_LIMIT_ORDER)
-        {
-            _market.SellLimit(
-                tradeVolume,
-                orderPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                typeTime,
-                expiration,
-                _comment);
-        }
-        else if (tradeTypeEnum == SELL_STOP_ORDER)
-        {
-            _market.SellStop(
-                tradeVolume,
-                orderPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                typeTime,
-                expiration,
-                _comment);
-        }
-
-        // Check result
-        if (!IsResultRetcode(TRADE_RETCODE_PLACED))
-        {
-            return;
-        }
-
-        // Save order ticket
-        if (tradeTypeEnum == BUY_LIMIT_ORDER || tradeTypeEnum == BUY_STOP_ORDER)
-        {
-            _buyPositionTicket = _market.ResultDeal();
-        }
-        else
-        {
-            _sellPositionTicket = _market.ResultDeal();
-        }
-    }
-
-    // Close market position by type
-    void PositionClose(TradePositionTypesEnum tradeTypeEnum)
-    {
-        // Close buy
-        if (tradeTypeEnum == BUY_POSITION && IsBuyPositionOpen())
-        {
-            _market.PositionClose(_buyPositionTicket);
-        }
-        // Close sell
-        else if (tradeTypeEnum == SELL_POSITION && IsSellPositionOpen())
-        {
-            _market.PositionClose(_sellPositionTicket);
-        }
-
-        // Check result
-        IsResultRetcode(TRADE_RETCODE_DONE);
-    }
-
-    // Delete market position by direction type
-    void OrderDelete(TradeOrderTypesEnum tradeTypeEnum)
-    {
-        // Delete buy order
-        if ((tradeTypeEnum == BUY_LIMIT_ORDER || tradeTypeEnum == BUY_STOP_ORDER) && IsBuyOrderPlaced())
-        {
-            _market.OrderDelete(_buyPositionTicket);
-        }
-        // Delete sell order
-        else if (IsSellOrderPlaced())
-        {
-            _market.OrderDelete(_sellPositionTicket);
-        }
-
-        // Check result
-        IsResultRetcode(TRADE_RETCODE_DONE);
+        this.ExecuteInternal(
+            signalType,
+            tradeLevels.TakeProfit,
+            tradeLevels.StopLoss,
+            tradeLevels.OrderEntryPrice,
+            tradeLevels.OrderTypeTime,
+            tradeLevels.OrderExpriation);
     }
 
     // Close all position with matching symbol and magic number
@@ -277,7 +178,152 @@ class TradeManager
         return OrderSelect(_sellPositionTicket);
     }
 
-  private:
+private:
+    // Open market position and check result code
+    void ExecuteInternal(
+        TradeSignalTypeEnum signalType,
+        double takeProfit,
+        double stopLoss)
+    {
+        // TODO validate trade levels
+        // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
+
+        // Normalize prices
+        takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
+        stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
+
+        // Send trade
+        string symbol = _contextParams.Symbol;
+        if (signalType == OPEN_BUY_MARKET)
+        {
+            double askPrice = GetAskPrice();
+
+            _market.Buy(
+                _riskManager
+                    .GetTradeVolume(askPrice, stopLoss),
+                symbol,
+                askPrice,
+                stopLoss,
+                takeProfit,
+                _comment);
+        }
+        else if (signalType == OPEN_SELL_MARKET)
+        {
+            double bidPrice = GetBidPrice();
+
+            _market.Sell(
+                _riskManager
+                    .GetTradeVolume(bidPrice, stopLoss),
+                symbol,
+                bidPrice,
+                stopLoss,
+                takeProfit,
+                _comment);
+        }
+
+        // Check result
+        if (!IsResultRetcode(TRADE_RETCODE_DONE))
+        {
+            // TODO Use logger manager to log an error
+            return;
+        }
+
+        // Save position ticket
+        if (signalType == OPEN_SELL_MARKET)
+        {
+            _sellPositionTicket = _market.ResultDeal();
+        }
+        else
+        {
+            _buyPositionTicket = _market.ResultDeal();
+        }
+    }
+
+    // Place market order and check result code
+    void ExecuteInternal(
+        TradeSignalTypeEnum signalType,
+        double takeProfit,
+        double stopLoss,
+        double orderEntryPrice,
+        ENUM_ORDER_TYPE_TIME orderTypeTime,
+        datetime orderExpiration)
+    {
+        // Normalize prices
+        takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
+        stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
+        orderEntryPrice = NormalizeDouble(orderEntryPrice, _contextParams.Digits);
+
+        // Get trade volume
+        double tradeVolume = _riskManager.GetTradeVolume(orderEntryPrice, stopLoss);
+
+        // Place order
+        string symbol = _contextParams.Symbol;
+        if (signalType == OPEN_BUY_LIMIT_ORDER)
+        {
+            _market.BuyLimit(
+                tradeVolume,
+                orderEntryPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                orderTypeTime,
+                orderExpiration,
+                _comment);
+        }
+        else if (signalType == OPEN_BUY_STOP_ORDER)
+        {
+            _market.BuyStop(
+                tradeVolume,
+                orderEntryPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                orderTypeTime,
+                orderExpiration,
+                _comment);
+        }
+        else if (signalType == OPEN_SELL_LIMIT_ORDER)
+        {
+            _market.SellLimit(
+                tradeVolume,
+                orderEntryPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                orderTypeTime,
+                orderExpiration,
+                _comment);
+        }
+        else if (signalType == OPEN_SELL_STOP_ORDER)
+        {
+            _market.SellStop(
+                tradeVolume,
+                orderEntryPrice,
+                symbol,
+                stopLoss,
+                takeProfit,
+                orderTypeTime,
+                orderExpiration,
+                _comment);
+        }
+
+        // Check result
+        if (!IsResultRetcode(TRADE_RETCODE_PLACED))
+        {
+            return;
+        }
+
+        // Save order ticket
+        if (signalType == OPEN_BUY_LIMIT_ORDER || signalType == OPEN_BUY_STOP_ORDER)
+        {
+            _buyPositionTicket = _market.ResultDeal();
+        }
+        else
+        {
+            _sellPositionTicket = _market.ResultDeal();
+        }
+    }
+
     // Get ask price
     double GetAskPrice()
     {
