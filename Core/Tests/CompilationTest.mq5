@@ -49,8 +49,8 @@ void OnStart()
     SignalManagerParams *signalManagerParams = new SignalManagerParams(&objectList, 123);
     SignalManager *signalManager = new SignalManager(signalManagerParams);
 
+        // Risk manager
     ContextParams *contextParams = new ContextParams("Test", 1, 1);
-    // Risk manager
     RiskManagerParams *riskManagerParams = new RiskManagerParams(1, 100, 100, FIXED_LOT_SIZE);
     RiskManager *riskManager = new RiskManager(contextParams, riskManagerParams);
 
