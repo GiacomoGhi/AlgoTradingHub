@@ -1,4 +1,8 @@
 .vscode
 
-# Ignore compilation test ex5 file
+# Ignore environment file
+*.env
+
+# Ignore compilation products
 *.ex5
+*.log
