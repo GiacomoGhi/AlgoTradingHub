@@ -1,5 +1,4 @@
 #include "./index.mqh";
-#include <Arrays/List.mqh>
 
 // TODO decontructors everywhere!!!!
 class ATHExpertAdvisor
