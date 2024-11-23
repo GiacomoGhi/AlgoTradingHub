@@ -1,4 +1,4 @@
-#include "../BaseModels/BaseIndicator.mqh";
+#include "../BaseIndicator.mqh";
 #include "./Models/TimeIndicatorSignalsEnum.mqh";
 
 class TimeIndicator : public BaseIndicator

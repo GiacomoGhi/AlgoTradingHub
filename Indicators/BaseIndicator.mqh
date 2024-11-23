@@ -1,5 +1,5 @@
-#include "../../Libraries/BinFlags/BinFlags.mqh";
-#include "../../Shared/Interfaces/ITradeSignal.mqh";
+#include "../Libraries/BinFlags/BinFlags.mqh";
+#include "../Shared/Interfaces/ITradeSignal.mqh";
 
 class BaseIndicator : public ITradeSignal
 {

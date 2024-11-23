@@ -1,4 +1,4 @@
-#include "../BaseModels/BaseIndicator.mqh";
+#include "../BaseIndicator.mqh";
 #include "./Models/MovingAvarageSignalsEnum.mqh";
 
 class MovingAvarage : public BaseIndicator
