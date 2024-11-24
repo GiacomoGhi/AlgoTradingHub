@@ -28,5 +28,3 @@ public:
           MaxOverallDrawDown(maxOverallDrawDown),
           SizeCalculationType(sizeCalculationType) {};
 }
-
-// TODO add safety stop loss value?

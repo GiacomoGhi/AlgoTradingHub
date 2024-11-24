@@ -61,6 +61,5 @@ public:
 
     // TODO implement max daily drowdown checks.
     // TODO implement max overall drowdown checks.
-    // TODO implement position size validation.
     // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
 }
