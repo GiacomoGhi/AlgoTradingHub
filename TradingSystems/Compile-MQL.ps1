@@ -1,7 +1,8 @@
 Param(
-    [switch]$help,     # Flag to display help information
-    [switch]$test,     # Test compilation flag
-    [string]$target    # Name of the target system (e.g., "Moving.Time.EA")
+    [switch]$help,       # Flag to display help information
+    [switch]$test,       # Test compilation flag
+    [string]$target,     # Name of the target system (e.g., "Moving.Time.EA")
+    [string]$n           # Optional custom name for output directory and file
 )
 
 # Display help if --help flag is provided
@@ -28,6 +29,12 @@ if ($help) {
     Write-Host "    .\Compile-TradingSystem.ps1 -target 'MovingAvarage.Time.EA'" -ForegroundColor Gray
     Write-Host ""
     Write-Host ""
+    exit
+}
+
+# Validate the $n parameter
+if ($n -and $n.Contains(" ")) {
+    Write-Host "ERROR: The parameter 'n' cannot contain spaces!" -ForegroundColor Red
     exit
 }
 
@@ -117,14 +124,15 @@ if ($test) {
 }
 
 # Create output folder if it doesn't exist
-$FinalOutputFolder = Join-Path $Output $target
+$FinalOutputFolder = if ($n) { Join-Path $Output $n } else { Join-Path $Output $target }
 if (!(Test-Path $FinalOutputFolder)) {
     New-Item -Path $FinalOutputFolder -ItemType Directory | Out-Null
 }
 
 # Generate unique identifier and copy the compiled file
 $UniqueId = Get-Date -Format "yyyyMMdd.HHmmss"
-$FinalEx5Path = Join-Path $FinalOutputFolder ($target + "_" + $UniqueId + ".ex5")
+$FinalEx5Path = if ($n) { Join-Path $FinalOutputFolder ($n + "_" + $UniqueId + ".ex5") } else { Join-Path $FinalOutputFolder ($target + "_" + $UniqueId + ".ex5") }
+
 
 if (Test-Path $CompiledFile) {
     Copy-Item -Path $CompiledFile -Destination $FinalEx5Path
