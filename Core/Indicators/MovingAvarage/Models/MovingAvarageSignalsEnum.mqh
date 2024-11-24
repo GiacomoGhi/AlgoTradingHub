@@ -1,30 +1,29 @@
 enum MovingAvarageSignalsEnum
 {
-    // Default value that returns true signal,
-    // it is used to ignore this indicator during signal analysis.
-    AlwaysTrue,
+    // Indicator will not produce signal.
+    NONE,
 
     // Price close is above the moving avarage
-    CloseAbove,
+    PRICE_CLOSE_ABOVE,
 
     // Price close is below the moving avarage
-    CloseBelow,
+    PRICE_CLOSE_BELOW,
 
     // Price previous close was below and price current close ss below
-    PriceUpwardCross,
+    PRICE_UPWARD_CROSS,
 
     // Price previous close was above and price current close is below
-    PriceDownwardCross,
+    PRICE_DOWNWARD_CROSS,
 
     // Moving avarage is in upward direction
-    UpwardDirection,
+    UPWARD_DIRECTION,
 
     // Moving avarage is in downward direction
-    DownwardDirection,
+    DOWNWARD_DIRECTION,
 
     // Moving avarage turned from downward to an upward direction
-    UpwardTurnAround,
+    UPWARD_TURNAROUND,
 
     // Moving avarage turned from upward to a downward direction
-    DownwardTurnAround,
+    DOWNWARD_TURNAROUND,
 };

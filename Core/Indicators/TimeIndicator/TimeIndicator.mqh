@@ -1,13 +1,10 @@
 #include "../BaseIndicator.mqh";
+#include "../IndicatorSignals.mqh";
 #include "./Models/TimeIndicatorSignalsEnum.mqh";
 
-class TimeIndicator : public BaseIndicator
+class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
 {
 private:
-    TimeIndicatorSignalsEnum _buySignalType;
-    TimeIndicatorSignalsEnum _closeBuySignalType;
-    TimeIndicatorSignalsEnum _sellSignalType;
-    TimeIndicatorSignalsEnum _closeSellSignalType;
     int _openTradeHour;
     int _closeTradeHour;
     int _rangeStartHour;
@@ -17,26 +14,16 @@ public:
     // Constructor
     TimeIndicator(
         string symbol,
-        ENUM_TIMEFRAMES timeFrame,
-        BinFlags &produceSignalType,
+        IndicatorSignals<TimeIndicatorSignalsEnum> &indicatorSignals,
         int openTradeHour,
         int closeTradeHour,
-        TimeIndicatorSignalsEnum buySignal,
-        TimeIndicatorSignalsEnum buySignalClose,
-        TimeIndicatorSignalsEnum sellSignal,
-        TimeIndicatorSignalsEnum sellSignalClose,
         int rangeStartHour = 0,
         int rangeStopHour = 0)
-        : _buySignalType(buySignal),
-          _closeBuySignalType(buySignalClose),
-          _sellSignalType(sellSignal),
-          _closeSellSignalType(sellSignalClose),
-          _openTradeHour(openTradeHour),
+        : _openTradeHour(openTradeHour),
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
-          // Call base class constructor
-          BaseIndicator(symbol, timeFrame, &produceSignalType)
+          BaseIndicator(symbol, indicatorSignals)
     {
     }
 
@@ -68,17 +55,14 @@ private:
     {
         switch (signalType)
         {
-        case CurrentHourIsOpenHour:
+        case CURRENT_HOUR_IS_OPEN_HOUR:
             return IsCurrentHourOpenHour();
 
-        case CurrentHourIsCloseHour:
+        case CURRENT_HOUR_IS_CLOSE_HOUR:
             return IsCurrentHourCloseHour();
 
-        case CurrentTimeIsInRange:
+        case CURRENT_TIME_IS_IN_RANGE:
             return IsCurrentTimeInRange();
-
-        case AlwaysTrue:
-            return true;
 
         default:
             return false;

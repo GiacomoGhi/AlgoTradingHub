@@ -1,44 +1,31 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/MovingAvarageSignalsEnum.mqh";
+#include "../IndicatorSignals.mqh";
 
-class MovingAvarage : public BaseIndicator
+class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
 {
-private:
-    MovingAvarageSignalsEnum _buySignalType;
-    MovingAvarageSignalsEnum _closeBuySignalType;
-    MovingAvarageSignalsEnum _sellSignalType;
-    MovingAvarageSignalsEnum _closeSellSignalType;
-    int _handle;
-
 public:
     // Constructor
     MovingAvarage(
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
-        BinFlags &produceSignalType,
+        IndicatorSignals<MovingAvarageSignalsEnum> &indicatorSignals,
         int period,
         int shift,
         ENUM_MA_METHOD method,
-        ENUM_APPLIED_PRICE appliedPrice,
-        MovingAvarageSignalsEnum buySignal,
-        MovingAvarageSignalsEnum buySignalClose,
-        MovingAvarageSignalsEnum sellSignal,
-        MovingAvarageSignalsEnum sellSignalClose)
-        : _buySignalType(buySignal),
-          _closeBuySignalType(buySignalClose),
-          _sellSignalType(sellSignal),
-          _closeSellSignalType(sellSignalClose),
-          // Call base class constructor
-          BaseIndicator(symbol, timeFrame, &produceSignalType)
+        ENUM_APPLIED_PRICE appliedPrice)
+        : BaseIndicator(
+              symbol,
+              indicatorSignals,
+              timeFrame,
+              iMA(
+                  symbol,
+                  timeFrame,
+                  period,
+                  shift,
+                  method,
+                  appliedPrice))
     {
-        // Moving avarage handle
-        _handle = iMA(
-            symbol,
-            timeFrame,
-            period,
-            shift,
-            method,
-            appliedPrice);
     }
 
     // Base class ITradeSignal implementation
@@ -47,16 +34,22 @@ public:
         switch (signalType)
         {
         case OPEN_BUY_MARKET:
-            return IsMovingAvarageValidSignal(_buySignalType);
+        case OPEN_BUY_LIMIT_ORDER:
+        case OPEN_BUY_STOP_ORDER:
+            return IsMovingAvarageValidSignal(this._openBuySignal);
 
-        // case CLOSE_BUY_SIGNAL:
-        //     return IsMovingAvarageValidSignal(_closeBuySignalType);
+        case CLOSE_BUY_MARKET:
+        case DELETE_BUY_ORDER:
+            return IsMovingAvarageValidSignal(this._closeBuySignal);
 
-        // case SELL_SIGNAL:
-        //     return IsMovingAvarageValidSignal(_sellSignalType);
+        case OPEN_SELL_MARKET:
+        case OPEN_SELL_LIMIT_ORDER:
+        case OPEN_SELL_STOP_ORDER:
+            return IsMovingAvarageValidSignal(this._openSellSignal);
 
-        // case CLOSE_SELL_SIGNAL:
-        //     return IsMovingAvarageValidSignal(_closeSellSignalType);
+        case CLOSE_SELL_MARKET:
+        case DELETE_SELL_ORDER:
+            return IsMovingAvarageValidSignal(this._closeSellSignal);
         default:
             return false;
         }
@@ -69,32 +62,29 @@ private:
     {
         switch (signalType)
         {
-        case CloseAbove:
+        case PRICE_CLOSE_ABOVE:
             return IsCloseAboveSignal();
 
-        case CloseBelow:
+        case PRICE_CLOSE_BELOW:
             return IsCloseBelowSignal();
 
-        case PriceUpwardCross:
+        case PRICE_UPWARD_CROSS:
             return IsPriceUpwardCrossSignal();
 
-        case PriceDownwardCross:
+        case PRICE_DOWNWARD_CROSS:
             return IsPriceDownwardCrossSignal();
 
-        case UpwardDirection:
+        case UPWARD_DIRECTION:
             return IsUpwardDirectionSignal();
 
-        case DownwardDirection:
+        case DOWNWARD_DIRECTION:
             return IsDownwardDirectionSignal();
 
-        case UpwardTurnAround:
+        case UPWARD_TURNAROUND:
             return IsUpwardTurnAroundSignal();
 
-        case DownwardTurnAround:
+        case DOWNWARD_TURNAROUND:
             return IsDownwardTurnAroundSignal();
-
-        case AlwaysTrue:
-            return true;
 
         default:
             return false;
@@ -113,7 +103,7 @@ private:
         return this.GetClosePrice() < this.GetIndicatorValue(_handle, 1);
     };
 
-    // Check if price previous close was below and price current close ss below
+    // Check if price previous close was below and price current close is below
     bool IsPriceUpwardCrossSignal()
     {
         return false;

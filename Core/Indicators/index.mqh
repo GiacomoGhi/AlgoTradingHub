@@ -1,3 +1,5 @@
 // Moving avarage
-#include "./MovingAvarage/Models/MovingAvarageSignalsEnum.mqh";
 #include "./MovingAvarage/MovingAvarage.mqh";
+
+// Time indicator
+#include "./TimeIndicator/TimeIndicator.mqh";
