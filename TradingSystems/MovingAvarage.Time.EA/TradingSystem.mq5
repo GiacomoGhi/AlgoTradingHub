@@ -9,11 +9,22 @@
 #property version "1.00"
 
 #include "../../Core/index.mqh";
+#include "../../Core/ATHExpertAdvisor.mqh";
 
 // Base system parameters
 input string __baseSystemInfoField = "Main parameters";
 input ulong __baseSystemMagicNumber = 10000001;                                    // Expert advisor unique Id
+input string __baseSystemComment = "ATH Expert Advisor";                           // Expert advisor trade comment
 input TradingStyleTypeEnum __baseSystemTradingStyleType = DIRECT_MARKET_EXECUTION; // Trading style type
+input bool __baseSystemAllowMultiplePosition = false;                              // Allow multiple open positions
+
+// Risk parameters
+sinput string ___riskManagerInfoField = "";
+sinput string ___riskManagerInfoField1 = "Risk manager parameters";
+input SizeCalculationTypeEnum __riskManagerSizeCalculationType = SizeCalculationTypeEnum::FIXED_LOT_SIZE; // Size calculation type
+input double __riskManagerSizeValueOrBalancePercentage = 1;                                               // Lots, money or balace percent to risk
+input double __riskManagerMaxDailyDrowDownPercentage = 4.5;                                               // Max daily equity drow down
+input double __riskManagerMaxOverallDrawDown = 9.5;                                                       // Max total equity drow down
 
 // Moving avarage indicator parameters
 sinput string ___movingAvarageIndicatorInfoField = "";
@@ -41,8 +52,14 @@ input TimeIndicatorSignalsEnum __timeIndicatorCloseBuySignal = TimeIndicatorSign
 input TimeIndicatorSignalsEnum __timeIndicatorOpenSellSignal = TimeIndicatorSignalsEnum::NONE;                       // Open sell trade signal type
 input TimeIndicatorSignalsEnum __timeIndicatorCloseSellSignal = TimeIndicatorSignalsEnum::NONE;                      // Close sell trade signal type
 
+// ATH Expert advisor object
+ATHExpertAdvisor *TradingSystem;
+
 int OnInit()
 {
+    // Trade signal list
+    ObjectList<ITradeSignal> *tradeSignalsList;
+
     // Moving avarage indicators singals
     IndicatorSignals<MovingAvarageSignalsEnum> *movingAvarageIndicatorSignals = new IndicatorSignals<MovingAvarageSignalsEnum>(
         // Open buy trade signal
@@ -70,6 +87,78 @@ int OnInit()
                 : true,
             __movingAvarageIndicatorCloseSellSignal));
 
+    // Add moving avarage to trade signals list
+    tradeSignalsList.Append(
+        new MovingAvarage(
+            _Symbol,
+            __movingAvarageIndicatorTimeFrame,
+            movingAvarageIndicatorSignals,
+            __movingAvarageIndicatorPeriod,
+            __movingAvarageIndicatorShift,
+            __movingAvarageIndicatorMethod,
+            __movingAvarageIndicatorAppliedPrice));
+
+    // Time indicator signals
+    IndicatorSignals<TimeIndicatorSignalsEnum> *timeIndicatorSignals = new IndicatorSignals<TimeIndicatorSignalsEnum>(
+        // Open buy trade signal
+        new Tuple<bool, TimeIndicatorSignalsEnum>(
+            __timeIndicatorOpenBuySignal == TimeIndicatorSignalsEnum::NONE
+                ? false
+                : true,
+            __timeIndicatorOpenBuySignal),
+        // Close buy trade signal
+        new Tuple<bool, TimeIndicatorSignalsEnum>(
+            __timeIndicatorCloseBuySignal == TimeIndicatorSignalsEnum::NONE
+                ? false
+                : true,
+            __timeIndicatorCloseBuySignal),
+        // Open sell trade signal
+        new Tuple<bool, TimeIndicatorSignalsEnum>(
+            __timeIndicatorOpenSellSignal == TimeIndicatorSignalsEnum::NONE
+                ? false
+                : true,
+            __timeIndicatorOpenSellSignal),
+        // Open buy trade singal
+        new Tuple<bool, TimeIndicatorSignalsEnum>(
+            __timeIndicatorCloseSellSignal == TimeIndicatorSignalsEnum::NONE
+                ? false
+                : true,
+            __timeIndicatorCloseSellSignal));
+
+    // Add time indicator to trade signals list
+    tradeSignalsList.Append(
+        new TimeIndicator(
+            _Symbol,
+            timeIndicatorSignals,
+            __timeIndicatorOpenTradeHour,
+            __timeIndicatorCloseTradeHour,
+            __timeIndicatorRangeStartHour,
+            __timeIndicatorRangeStopHour));
+
+    // Trade manager params
+    TradeManagerParams *tradeManagerParams = new TradeManagerParams(
+        __baseSystemMagicNumber,
+        __baseSystemComment);
+
+    // Risk manager params
+    RiskManagerParams *riskManagerParams = new RiskManagerParams(
+        __riskManagerSizeValueOrBalancePercentage,
+        __riskManagerMaxDailyDrowDownPercentage,
+        __riskManagerMaxOverallDrawDown,
+        __riskManagerSizeCalculationType);
+
+    // Signal manager params
+    SignalManagerParams *signalManagerParams = new SignalManagerParams(tradeSignalsList);
+
+    // Initialize ATH Expert Advisor
+    TradingSystem = new ATHExpertAdvisor(
+        new ContextParams(_Symbol),
+        tradeManagerParams,
+        riskManagerParams,
+        signalManagerParams
+        // TODO tradeLevelsIndicator
+    );
+
     return (INIT_SUCCEEDED);
 }
 
@@ -79,4 +168,5 @@ void OnDeinit(const int reason)
 
 void OnTick()
 {
+    TradingSystem.OnTick();
 }
