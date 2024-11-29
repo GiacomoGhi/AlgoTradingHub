@@ -6,13 +6,10 @@ public:
     const int Digits;
 
     // Constructor
-    ContextParams(
-        string symbol,
-        double points,
-        int digits)
+    ContextParams(string symbol)
         : Symbol(symbol),
-          Points(points),
-          Digits(digits)
+          Points(SymbolInfoDouble(symbol, SYMBOL_POINT)),
+          Digits((int)SymbolInfoInteger(symbol, SYMBOL_DIGITS))
     {
     }
 }

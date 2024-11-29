@@ -4,7 +4,6 @@
 class ATHExpertAdvisor
 {
 private:
-    ContextParams *_contextParams;
     SignalManager *_signalManager;
     TradeManager *_tradeManager;
     ITradeLevelsIndicator *_tradeLevelsIndicator;
@@ -14,13 +13,16 @@ public:
     ATHExpertAdvisor(
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        SignalManagerParams &signalManagerParams)
-        : _contextParams(&contextParams)
+        RiskManagerParams &riskManagerParams,
+        SignalManagerParams &signalManagerParams,
+        ITradeLevelsIndicator &tradeLevelsIndicator)
+        : _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
         // Trade manager
         _tradeManager = new TradeManager(
             &contextParams,
-            &tradeManagerParams);
+            &tradeManagerParams,
+            &riskManagerParams);
 
         // Signal manager
         _signalManager = new SignalManager(
@@ -30,12 +32,6 @@ public:
     void OnTick()
     {
         this.ExecuteSignals();
-
-        /**
-         * use ITradeLevels Obj
-         * where needed to get trading Levels such as TP and SL
-         * use trade manager to execute the trades.
-         */
     }
 
 private:

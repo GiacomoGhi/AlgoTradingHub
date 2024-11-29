@@ -21,11 +21,17 @@ private:
 
 public:
     // Constructor
-    TradeManager(ContextParams &contextParams, TradeManagerParams &tradeManagerParams)
+    TradeManager(
+        ContextParams &contextParams,
+        TradeManagerParams &tradeManagerParams,
+        RiskManagerParams &riskManagerParams)
         : _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
           _comment(tradeManagerParams.Comment),
-          _riskManager(&contextParams, tradeManagerParams.RiskManagerParams)
+          // Interally used risk manager
+          _riskManager(
+              &contextParams,
+              &riskManagerParams)
     {
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
 
