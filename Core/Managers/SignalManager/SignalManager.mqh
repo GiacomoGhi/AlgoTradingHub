@@ -4,8 +4,8 @@
 class SignalManager : public ITradeSignalTypeEnumHelperStrategy
 {
 private:
-    ObjectList<ITradeSignal> *_tradeSignalsList;
-    BasicList<int> _signalsToExecute;
+    ObjectList<ITradeSignal> *_tradeSignalProviders;
+    BasicList<int> *_signalsToExecute;
 
 public:
     /**
@@ -13,24 +13,27 @@ public:
      * @param signalManagerParams Parameters containing the trade signals list.
      */
     SignalManager(SignalManagerParams &signalManagerParams)
-        : _tradeSignalsList(signalManagerParams.TradeSignalsList)
+        : _tradeSignalProviders(signalManagerParams.TradeSignalProviders)
     {
     }
 
     /**
-     * Checks indicators and returns the trading signals to execute.
-     * @return Pointer to BinFlags containing the signals to execute.
+     * Checks indicators and updates by reference the received singals list.
      */
-    BasicList<int> *GetSignalsToExecute()
+    void GetSignalsToExecute(BasicList<int> &receivedSignalsToExecute)
     {
         // Clear previous signals
         _signalsToExecute.RemoveAll();
+        receivedSignalsToExecute.RemoveAll();
+
+        // Set internal list pointer to received list
+        _signalsToExecute = &receivedSignalsToExecute;
 
         // Execute this.ForEachAlgorithmInterface()
         // For each value of the enum TradeSignalTypeEnum
         TradeSignalTypeEnumHelper::ForEach(&this);
 
-        return &_signalsToExecute;
+        return;
     }
 
     /**
@@ -58,12 +61,12 @@ private:
         int validatedSignals = 0;
 
         // Total amount of singals that needs to be valid
-        int totalTradeSignalsToCheck = _tradeSignalsList.Count();
+        int totalTradeSignalsToCheck = _tradeSignalProviders.Count();
 
         // Valodate signal for each signal provider
-        for (int i = 0; i < _tradeSignalsList.Count(); i++)
+        for (int i = 0; i < _tradeSignalProviders.Count(); i++)
         {
-            ITradeSignal *tradeSignal = _tradeSignalsList[i];
+            ITradeSignal *tradeSignal = _tradeSignalProviders[i];
             if (!tradeSignal.ProduceSignal(signalType))
             {
                 // Reduce the amount of trade signals that needs to be valid

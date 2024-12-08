@@ -82,6 +82,7 @@ protected:
         return valueContainer[0];
     };
 
+    // TODO Move this to static class helper MarketHelper
     // Get ask price
     double GetAskPrice()
     {

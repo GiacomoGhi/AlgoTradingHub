@@ -4,9 +4,9 @@
 class SignalManagerParams
 {
 public:
-    ObjectList<ITradeSignal> *TradeSignalsList;
+    ObjectList<ITradeSignal> *TradeSignalProviders;
 
     // Constructor
     SignalManagerParams(ObjectList<ITradeSignal> &tradeSignalList)
-        : TradeSignalsList(&tradeSignalList) {}
+        : TradeSignalProviders(&tradeSignalList) {}
 }

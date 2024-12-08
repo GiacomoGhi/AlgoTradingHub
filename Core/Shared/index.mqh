@@ -9,3 +9,6 @@
 // Enums
 #include "./Enums/TradeSignalTypeEnum.mqh"
 #include "./Enums/TradingStyleTypeEnum.mqh"
+
+// Helpers
+#include "./Helpers/MarketHelper.mqh";

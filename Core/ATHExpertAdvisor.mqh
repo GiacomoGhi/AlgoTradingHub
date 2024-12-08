@@ -7,6 +7,7 @@ private:
     SignalManager *_signalManager;
     TradeManager *_tradeManager;
     ITradeLevelsIndicator *_tradeLevelsIndicator;
+    BasicList<int> _signalsToExecute;
 
 public:
     // Constructor
@@ -14,9 +15,9 @@ public:
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
-        SignalManagerParams &signalManagerParams,
-        ITradeLevelsIndicator &tradeLevelsIndicator)
-        : _tradeLevelsIndicator(&tradeLevelsIndicator)
+        SignalManagerParams &signalManagerParams)
+    // ITradeLevelsIndicator &tradeLevelsIndicator)
+    // : _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
         // Trade manager
         _tradeManager = new TradeManager(
@@ -41,41 +42,41 @@ private:
     void ExecuteSignals()
     {
         // Gets signals that needs to be executed
-        BasicList<int> *signalsToExecute = _signalManager.GetSignalsToExecute();
+        _signalManager.GetSignalsToExecute(&_signalsToExecute);
 
-        if (signalsToExecute.Count() == 0)
+        if (_signalsToExecute.Count() == 0)
         {
             return;
         }
 
         // First thing first, close trades or delete open orders
-        if (signalsToExecute.Contains(CLOSE_BUY_MARKET))
+        if (_signalsToExecute.Contains(CLOSE_BUY_MARKET))
         {
             _tradeManager.Execute(CLOSE_BUY_MARKET);
-            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
-        if (signalsToExecute.Contains(DELETE_BUY_ORDER))
+        if (_signalsToExecute.Contains(DELETE_BUY_ORDER))
         {
             _tradeManager.Execute(DELETE_BUY_ORDER);
-            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
-        if (signalsToExecute.Contains(CLOSE_SELL_MARKET))
+        if (_signalsToExecute.Contains(CLOSE_SELL_MARKET))
         {
             _tradeManager.Execute(CLOSE_SELL_MARKET);
-            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
-        if (signalsToExecute.Contains(DELETE_SELL_ORDER))
+        if (_signalsToExecute.Contains(DELETE_SELL_ORDER))
         {
             _tradeManager.Execute(DELETE_SELL_ORDER);
-            signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
         // All close and delete type signals have been executed,
         // Check if there are any open type signal yet to execute
-        if (signalsToExecute.Count() == 0)
+        if (_signalsToExecute.Count() == 0)
         {
             return;
         }
@@ -84,10 +85,10 @@ private:
         // TODO trade levels should be get based on TradeSignalTypeEnum
         TradeLevels *tradeLevels = _tradeLevelsIndicator.GetTradeLevels();
 
-        for (int i = 0; i < signalsToExecute.Count(); i++)
+        for (int i = 0; i < _signalsToExecute.Count(); i++)
         {
             _tradeManager.Execute(
-                (TradeSignalTypeEnum)signalsToExecute.Get(i),
+                (TradeSignalTypeEnum)_signalsToExecute.Get(i),
                 tradeLevels);
         }
     }

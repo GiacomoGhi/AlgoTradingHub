@@ -159,6 +159,8 @@ int OnInit()
         // TODO tradeLevelsIndicator
     );
 
+    // double test = MarketHelper::GetAskPrice();
+
     return (INIT_SUCCEEDED);
 }
 
