@@ -22,12 +22,11 @@ public:
      */
     void GetSignalsToExecute(BasicList<int> &receivedSignalsToExecute)
     {
-        // Clear previous signals
-        _signalsToExecute.RemoveAll();
-        receivedSignalsToExecute.RemoveAll();
-
         // Set internal list pointer to received list
         _signalsToExecute = &receivedSignalsToExecute;
+
+        // Clear previous signals
+        _signalsToExecute.RemoveAll();
 
         // Execute this.ForEachAlgorithmInterface()
         // For each value of the enum TradeSignalTypeEnum

@@ -26,6 +26,15 @@ input double __riskManagerSizeValueOrBalancePercentage = 1;                     
 input double __riskManagerMaxDailyDrowDownPercentage = 4.5;                                               // Max daily equity drow down
 input double __riskManagerMaxOverallDrawDown = 9.5;                                                       // Max total equity drow down
 
+// Trade levels parameters
+sinput string ___tradeLevelsInfoField = "";
+sinput string ___tradeLevelsInfoField1 = "Trade levels parameters";
+input int __tradeLevelsTakeProfitLenght = 0;                            // Take profit lenght
+input int __tradeLevelsStopLossLenght = 0;                              // Stop loss lenght
+input int __tradeLevelsOrderDistanceFromPrice = 0;                      // Order distance from price
+input ENUM_ORDER_TYPE_TIME __tradeLevelsOrderTypeTime = ORDER_TIME_GTC; // Order type time
+input int __tradeLevelsOrderExpirationHour = -1;                        // Order expiration hour
+
 // Moving avarage indicator parameters
 sinput string ___movingAvarageIndicatorInfoField = "";
 sinput string ___movingAvarageIndicatorInfoField1 = "Moving avarage indicator parameters";
@@ -58,7 +67,7 @@ ATHExpertAdvisor *TradingSystem;
 int OnInit()
 {
     // Trade signal list
-    ObjectList<ITradeSignal> *tradeSignalsList;
+    ObjectList<ITradeSignal> *tradeSignalsList = new ObjectList<ITradeSignal>();
 
     // Moving avarage indicators singals
     IndicatorSignals<MovingAvarageSignalsEnum> *movingAvarageIndicatorSignals = new IndicatorSignals<MovingAvarageSignalsEnum>(
@@ -150,16 +159,25 @@ int OnInit()
     // Signal manager params
     SignalManagerParams *signalManagerParams = new SignalManagerParams(tradeSignalsList);
 
+    // Context params
+    ContextParams *contextParams = new ContextParams(_Symbol);
+
+    // Fixed trade levels indicator
+    FixedTradeLevels *fixedTradeLevels = new FixedTradeLevels(
+        contextParams,
+        __tradeLevelsTakeProfitLenght,
+        __tradeLevelsStopLossLenght,
+        __tradeLevelsOrderDistanceFromPrice,
+        __tradeLevelsOrderTypeTime,
+        __tradeLevelsOrderExpirationHour);
+
     // Initialize ATH Expert Advisor
     TradingSystem = new ATHExpertAdvisor(
-        new ContextParams(_Symbol),
+        contextParams,
         tradeManagerParams,
         riskManagerParams,
-        signalManagerParams
-        // TODO tradeLevelsIndicator
-    );
-
-    // double test = MarketHelper::GetAskPrice();
+        signalManagerParams,
+        fixedTradeLevels);
 
     return (INIT_SUCCEEDED);
 }

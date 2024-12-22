@@ -87,7 +87,7 @@ public:
     // Open a new position or order in the market.
     void Execute(TradeSignalTypeEnum signalType, TradeLevels &tradeLevels)
     {
-        // Exit if signal is not for and "open" type
+        // Exit if signal is not an "open" type
         if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
             // TODO log error: "Unsupported operation type"

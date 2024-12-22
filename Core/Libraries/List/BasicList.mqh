@@ -25,7 +25,6 @@ public:
     BasicList() {}
     BasicList(BasicList &src) { Copy(items, src.items); }
     ~BasicList() {}
-    BasicList operator=(BasicList &);
     // accessing
     T operator[](int i) { return Get(i); }
     T Get(int at)

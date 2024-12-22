@@ -94,13 +94,13 @@ private:
     // Check if previous candle close price is above the moving avarage
     bool IsCloseAboveSignal()
     {
-        return this.GetClosePrice() > this.GetIndicatorValue(_handle, 1);
+        return MarketHelper::GetClosePrice(this._symbol) > this.GetIndicatorValue(_handle, 1);
     };
 
     // Check if previous candle close price is below the moving avarage
     bool IsCloseBelowSignal()
     {
-        return this.GetClosePrice() < this.GetIndicatorValue(_handle, 1);
+        return MarketHelper::GetClosePrice(this._symbol) < this.GetIndicatorValue(_handle, 1);
     };
 
     // Check if price previous close was below and price current close is below

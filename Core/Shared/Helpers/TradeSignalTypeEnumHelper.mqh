@@ -73,11 +73,35 @@ public:
     }
 
     /**
+     * Returns true if signal type is of type: OPEN_BUY_* .
+     * */
+    static bool IsOpenBuyType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_BUY_MARKET || signalType == OPEN_BUY_LIMIT_ORDER || signalType == OPEN_BUY_STOP_ORDER;
+    }
+
+    /**
+     * Returns true if signal type is of type: OPEN_SELL_* .
+     * */
+    static bool IsOpenSellType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_SELL_MARKET || signalType == OPEN_SELL_LIMIT_ORDER || signalType == OPEN_SELL_STOP_ORDER;
+    }
+
+    /**
      * Returns true if signal type is of type: *_MARKET .
      * */
     static bool IsMarketType(TradeSignalTypeEnum signalType)
     {
         return signalType == OPEN_BUY_MARKET || signalType == CLOSE_BUY_MARKET || signalType == OPEN_SELL_MARKET || signalType == CLOSE_SELL_MARKET;
+    }
+
+    /**
+     * Returns true if signal type is of type: *_LIMIT_ORDER .
+     * */
+    static bool IsLimitType(TradeSignalTypeEnum signalType)
+    {
+        return signalType == OPEN_BUY_LIMIT_ORDER || signalType == OPEN_SELL_LIMIT_ORDER;
     }
 
     /**

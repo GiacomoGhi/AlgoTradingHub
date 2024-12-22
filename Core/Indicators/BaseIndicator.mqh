@@ -81,29 +81,4 @@ protected:
 
         return valueContainer[0];
     };
-
-    // TODO Move this to static class helper MarketHelper
-    // Get ask price
-    double GetAskPrice()
-    {
-        return SymbolInfoDouble(_symbol, SYMBOL_ASK);
-    };
-
-    // Get bid price
-    double GetBidPrice()
-    {
-        return SymbolInfoDouble(_symbol, SYMBOL_BID);
-    };
-
-    // Get close price
-    double GetClosePrice(int shift = 1)
-    {
-        return iClose(_symbol, _timeFrame, shift);
-    }
-
-    // Get open price
-    double GetOpenPrice(int shift = 1)
-    {
-        return iOpen(_symbol, _timeFrame, shift);
-    }
 }

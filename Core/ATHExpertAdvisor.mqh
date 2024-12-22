@@ -15,9 +15,9 @@ public:
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
-        SignalManagerParams &signalManagerParams)
-    // ITradeLevelsIndicator &tradeLevelsIndicator)
-    // : _tradeLevelsIndicator(&tradeLevelsIndicator)
+        SignalManagerParams &signalManagerParams,
+        ITradeLevelsIndicator &tradeLevelsIndicator)
+        : _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
         // Trade manager
         _tradeManager = new TradeManager(
@@ -28,18 +28,12 @@ public:
         // Signal manager
         _signalManager = new SignalManager(
             &signalManagerParams);
+
+        // signals to execute list
+        _signalsToExecute = new BasicList<int>();
     };
 
     void OnTick()
-    {
-        this.ExecuteSignals();
-    }
-
-private:
-    /**
-     * Gets and execute signals from signal manager
-     */
-    void ExecuteSignals()
     {
         // Gets signals that needs to be executed
         _signalManager.GetSignalsToExecute(&_signalsToExecute);
@@ -49,7 +43,7 @@ private:
             return;
         }
 
-        // First thing first, close trades or delete open orders
+        // Execute close and delete signals
         if (_signalsToExecute.Contains(CLOSE_BUY_MARKET))
         {
             _tradeManager.Execute(CLOSE_BUY_MARKET);
@@ -74,22 +68,23 @@ private:
             _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
-        // All close and delete type signals have been executed,
-        // Check if there are any open type signal yet to execute
+        // Exit if empty
         if (_signalsToExecute.Count() == 0)
         {
             return;
         }
 
-        // TODO this should be moved inside the for loop
-        // TODO trade levels should be get based on TradeSignalTypeEnum
-        TradeLevels *tradeLevels = _tradeLevelsIndicator.GetTradeLevels();
-
+        // Execute open trades signals
         for (int i = 0; i < _signalsToExecute.Count(); i++)
         {
+            // Cast
+            TradeSignalTypeEnum tradeSignal = (TradeSignalTypeEnum)_signalsToExecute.Get(i);
+
+            // Execute signal
             _tradeManager.Execute(
-                (TradeSignalTypeEnum)_signalsToExecute.Get(i),
-                tradeLevels);
+                tradeSignal,
+                _tradeLevelsIndicator
+                    .GetTradeLevels(tradeSignal));
         }
     }
 }
