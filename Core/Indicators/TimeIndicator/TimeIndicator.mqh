@@ -5,6 +5,7 @@
 class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
 {
 private:
+    const string _className;
     int _openTradeHour;
     int _closeTradeHour;
     int _rangeStartHour;
@@ -13,18 +14,21 @@ private:
 public:
     // Constructor
     TimeIndicator(
+        Logger &logger,
         string symbol,
         IndicatorSignals<TimeIndicatorSignalsEnum> &indicatorSignals,
         int openTradeHour,
         int closeTradeHour,
         int rangeStartHour = 0,
         int rangeStopHour = 0)
-        : _openTradeHour(openTradeHour),
+        : _className("TimeIndicator"),
+          _openTradeHour(openTradeHour),
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
-          BaseIndicator(symbol, indicatorSignals)
+          BaseIndicator("TimeIndicator", &logger, symbol, indicatorSignals)
     {
+        _logger.LogInitCompleted(_className);
     }
 
     // Base class ITradeSignal implementation
@@ -32,23 +36,28 @@ public:
     {
         switch (signalType)
         {
-        // case BUY_SIGNAL:
-        //     return IsTimeIndicatorValidSignal(_buySignalType);
+        case OPEN_BUY_MARKET:
+        case OPEN_BUY_LIMIT_ORDER:
+        case OPEN_BUY_STOP_ORDER:
+            return IsTimeIndicatorValidSignal(this._openBuySignal);
 
-        // case CLOSE_BUY_SIGNAL:
-        //     return IsTimeIndicatorValidSignal(_closeBuySignalType);
+        case CLOSE_BUY_MARKET:
+        case DELETE_BUY_ORDER:
+            return IsTimeIndicatorValidSignal(this._closeBuySignal);
 
-        // case SELL_SIGNAL:
-        //     return IsTimeIndicatorValidSignal(_sellSignalType);
+        case OPEN_SELL_MARKET:
+        case OPEN_SELL_LIMIT_ORDER:
+        case OPEN_SELL_STOP_ORDER:
+            return IsTimeIndicatorValidSignal(this._openSellSignal);
 
-        // case CLOSE_SELL_SIGNAL:
-        //     return IsTimeIndicatorValidSignal(_closeSellSignalType);
+        case CLOSE_SELL_MARKET:
+        case DELETE_SELL_ORDER:
+            return IsTimeIndicatorValidSignal(this._closeSellSignal);
         default:
             return false;
         }
     };
 
-    // Private methods
 private:
     // Return signal method result given a signal type
     bool IsTimeIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)

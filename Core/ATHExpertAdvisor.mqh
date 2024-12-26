@@ -4,6 +4,8 @@
 class ATHExpertAdvisor
 {
 private:
+    const string _className;
+    Logger *_logger;
     SignalManager *_signalManager;
     TradeManager *_tradeManager;
     ITradeLevelsIndicator *_tradeLevelsIndicator;
@@ -12,25 +14,32 @@ private:
 public:
     // Constructor
     ATHExpertAdvisor(
+        Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
         SignalManagerParams &signalManagerParams,
         ITradeLevelsIndicator &tradeLevelsIndicator)
-        : _tradeLevelsIndicator(&tradeLevelsIndicator)
+        : _className("ATHExpertAdvisor"),
+          _logger(&logger),
+          _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
         // Trade manager
         _tradeManager = new TradeManager(
+            &logger,
             &contextParams,
             &tradeManagerParams,
             &riskManagerParams);
 
         // Signal manager
         _signalManager = new SignalManager(
+            &logger,
             &signalManagerParams);
 
         // signals to execute list
         _signalsToExecute = new BasicList<int>();
+
+        _logger.LogInitCompleted(_className);
     };
 
     void OnTick()

@@ -1,9 +1,12 @@
 #include "./Models/SignalManagerParams.mqh";
+#include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 
 class SignalManager : public ITradeSignalTypeEnumHelperStrategy
 {
 private:
+    const string _className;
+    Logger *_logger;
     ObjectList<ITradeSignal> *_tradeSignalProviders;
     BasicList<int> *_signalsToExecute;
 
@@ -12,9 +15,14 @@ public:
      * Constructor
      * @param signalManagerParams Parameters containing the trade signals list.
      */
-    SignalManager(SignalManagerParams &signalManagerParams)
-        : _tradeSignalProviders(signalManagerParams.TradeSignalProviders)
+    SignalManager(
+        Logger &logger,
+        SignalManagerParams &signalManagerParams)
+        : _className("SignalManager"),
+          _logger(&logger),
+          _tradeSignalProviders(signalManagerParams.TradeSignalProviders)
     {
+        _logger.LogInitCompleted(_className);
     }
 
     /**

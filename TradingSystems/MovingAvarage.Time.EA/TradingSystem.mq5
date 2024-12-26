@@ -13,10 +13,11 @@
 
 // Base system parameters
 input string __baseSystemInfoField = "Main parameters";
+input string __baseSystemName = "MovingAvarage.Time.EA";                           // Expert advisor name, comments and logs
 input ulong __baseSystemMagicNumber = 10000001;                                    // Expert advisor unique Id
-input string __baseSystemComment = "ATH Expert Advisor";                           // Expert advisor trade comment
 input TradingStyleTypeEnum __baseSystemTradingStyleType = DIRECT_MARKET_EXECUTION; // Trading style type
 input bool __baseSystemAllowMultiplePosition = false;                              // Allow multiple open positions
+input bool __baseSystemAllowLogging = false;                                       // Allow ea info logging
 
 // Risk parameters
 sinput string ___riskManagerInfoField = "";
@@ -66,6 +67,12 @@ ATHExpertAdvisor *TradingSystem;
 
 int OnInit()
 {
+    // Logger
+    Logger *logger = new Logger(
+        __baseSystemAllowLogging,
+        __baseSystemName,
+        __baseSystemMagicNumber);
+
     // Trade signal list
     ObjectList<ITradeSignal> *tradeSignalsList = new ObjectList<ITradeSignal>();
 
@@ -99,6 +106,7 @@ int OnInit()
     // Add moving avarage to trade signals list
     tradeSignalsList.Append(
         new MovingAvarage(
+            logger,
             _Symbol,
             __movingAvarageIndicatorTimeFrame,
             movingAvarageIndicatorSignals,
@@ -137,6 +145,7 @@ int OnInit()
     // Add time indicator to trade signals list
     tradeSignalsList.Append(
         new TimeIndicator(
+            logger,
             _Symbol,
             timeIndicatorSignals,
             __timeIndicatorOpenTradeHour,
@@ -147,7 +156,7 @@ int OnInit()
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(
         __baseSystemMagicNumber,
-        __baseSystemComment);
+        __baseSystemName);
 
     // Risk manager params
     RiskManagerParams *riskManagerParams = new RiskManagerParams(
@@ -164,6 +173,7 @@ int OnInit()
 
     // Fixed trade levels indicator
     FixedTradeLevels *fixedTradeLevels = new FixedTradeLevels(
+        logger,
         contextParams,
         __tradeLevelsTakeProfitLenght,
         __tradeLevelsStopLossLenght,
@@ -173,6 +183,7 @@ int OnInit()
 
     // Initialize ATH Expert Advisor
     TradingSystem = new ATHExpertAdvisor(
+        logger,
         contextParams,
         tradeManagerParams,
         riskManagerParams,

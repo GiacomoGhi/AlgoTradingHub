@@ -1,11 +1,14 @@
 #include "../../Shared/Interfaces/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Helpers/MarketHelper.mqh";
-#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh"
+#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
+#include "../../Shared/Logger/Logger.mqh";
 
 class FixedTradeLevels : public ITradeLevelsIndicator
 {
 private:
+    const string _className;
+    Logger *_logger;
     ContextParams *_contextParams;
     int _takeProfitLenght;
     int _stopLossLenght;
@@ -18,18 +21,24 @@ public:
      * Constructor to initialize FixedTradeLevels with specific parameters.
      */
     FixedTradeLevels(
+        Logger &logger,
         ContextParams &contextParams,
         int takeProfitLenght = 0,
         int stopLossLenght = 0,
         int orderDistanceFromCurrentPrice = 0,
         ENUM_ORDER_TYPE_TIME orderTypeTime = ORDER_TIME_GTC,
         int orderExpirationHour = -1)
-        : _contextParams(&contextParams),
+        : _className("FixedTradeLevels"),
+          _logger(&logger),
+          _contextParams(&contextParams),
           _takeProfitLenght(takeProfitLenght),
           _stopLossLenght(stopLossLenght),
           _orderDistanceFromCurrentPrice(orderDistanceFromCurrentPrice),
           _orderTypeTime(orderTypeTime),
-          _orderExpirationHour(orderExpirationHour) {};
+          _orderExpirationHour(orderExpirationHour)
+    {
+        _logger.LogInitCompleted(_className);
+    };
 
     /**
      * ITradeLevelsIndicator implementation.

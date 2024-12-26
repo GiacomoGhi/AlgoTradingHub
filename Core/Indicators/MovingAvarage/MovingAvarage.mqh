@@ -4,9 +4,13 @@
 
 class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
 {
+private:
+    const string _className;
+
 public:
     // Constructor
     MovingAvarage(
+        Logger &logger,
         string symbol,
         ENUM_TIMEFRAMES timeFrame,
         IndicatorSignals<MovingAvarageSignalsEnum> &indicatorSignals,
@@ -14,7 +18,10 @@ public:
         int shift,
         ENUM_MA_METHOD method,
         ENUM_APPLIED_PRICE appliedPrice)
-        : BaseIndicator(
+        : _className("MovingAvarage"),
+          BaseIndicator(
+              "MovingAvarage",
+              &logger,
               symbol,
               indicatorSignals,
               timeFrame,
@@ -26,6 +33,7 @@ public:
                   method,
                   appliedPrice))
     {
+        _logger.LogInitCompleted(_className);
     }
 
     // Base class ITradeSignal implementation
@@ -55,7 +63,6 @@ public:
         }
     };
 
-    // Private methods
 private:
     // Return signal method result given a signal type
     bool IsMovingAvarageValidSignal(MovingAvarageSignalsEnum signalType)

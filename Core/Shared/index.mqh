@@ -12,3 +12,6 @@
 
 // Helpers
 #include "./Helpers/MarketHelper.mqh";
+
+// Logger
+#include "./Logger/Logger.mqh";

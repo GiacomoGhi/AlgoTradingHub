@@ -1,5 +1,6 @@
 #include "../../Shared/Models/ContextParams.mqh";
 #include "../../Shared/Models/TradeLevels.mqh";
+#include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../RiskManager/RiskManager.mqh"
 #include "./Models/TradeManagerParams.mqh";
@@ -8,46 +9,54 @@
 class TradeManager
 {
 private:
-    // Constructor init
+    const string _className;
+    Logger *_logger;
     ContextParams *_contextParams;
     CTrade _market;
     ulong _magicNumber;
     string _comment;
-
-    // Internal properties
-    RiskManager _riskManager;
+    RiskManager *_riskManager;
     ulong _buyPositionTicket;
     ulong _sellPositionTicket;
 
 public:
     // Constructor
     TradeManager(
+        Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams)
-        : _contextParams(&contextParams),
+        : _className("TradeManager"),
+          _logger(&logger),
+          _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
-          _comment(tradeManagerParams.Comment),
-          // Interally used risk manager
-          _riskManager(
-              &contextParams,
-              &riskManagerParams)
+          _comment(tradeManagerParams.Comment)
     {
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
+
+        // Interally used risk manager
+        _riskManager = new RiskManager(
+            &logger,
+            &contextParams,
+            &riskManagerParams);
 
         // TODO Manage only positions or orders from context settings
         // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
+
+        _logger.LogInitCompleted(_className);
     };
 
     // Close or delete singals only,
     // overload with TradeLevels to execute a new position or order.
     void Execute(TradeSignalTypeEnum signalType)
     {
+        _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
+
         if (TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            // TODO log error: "Unsupported operation type"
+            _logger.Log(ERROR, _className, "Unsupported signal type");
             return;
         }
 
@@ -87,10 +96,12 @@ public:
     // Open a new position or order in the market.
     void Execute(TradeSignalTypeEnum signalType, TradeLevels &tradeLevels)
     {
+        _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
+
         // Exit if signal is not an "open" type
         if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            // TODO log error: "Unsupported operation type"
+            _logger.Log(ERROR, _className, "Unsupported signal type");
             return;
         }
         // If open at market type, execute it and then exit
@@ -106,9 +117,9 @@ public:
             return;
         }
         // Exit if entry price is not set
-        else if (tradeLevels.OrderEntryPrice)
+        else if (tradeLevels.OrderEntryPrice <= 0)
         {
-            // TODO log error: "Must set entry price"
+            _logger.Log(ERROR, _className, "Invalid order price");
             return;
         }
 
@@ -230,7 +241,6 @@ private:
         // Check result
         if (!IsResultRetcode(TRADE_RETCODE_DONE))
         {
-            // TODO Use logger manager to log an error
             return;
         }
 
@@ -350,14 +360,20 @@ private:
         if (result != retcode)
         {
             // Failure message
-            Print("Action failed. Return code=", result,
-                  ". Code description: ", _market.ResultRetcodeDescription());
+            _logger.Log(
+                ERROR,
+                _className,
+                "Action failed. Return code=" + (string)result + ". Code description: " + _market.ResultRetcodeDescription());
 
             // Exit
             return false;
         }
 
-        Print("Action completed. Return code=", result);
+        _logger.Log(
+            INFO,
+            _className,
+            "Action completed. Return code=" + (string)result + ". Code description: " + _market.ResultRetcodeDescription());
+
         return true;
     };
 
@@ -388,7 +404,10 @@ private:
                         _sellPositionTicket = ticket;
                     }
 
-                    Print("Found position with ticket=", ticket);
+                    _logger.Log(
+                        INFO,
+                        _className,
+                        "Found position with ticket: " + (string)ticket);
                 }
             }
         }
@@ -421,7 +440,10 @@ private:
                         _sellPositionTicket = ticket;
                     }
 
-                    Print("Found order with ticket=", ticket);
+                    _logger.Log(
+                        INFO,
+                        _className,
+                        "Found order with ticket: " + (string)ticket);
                 }
             }
         }

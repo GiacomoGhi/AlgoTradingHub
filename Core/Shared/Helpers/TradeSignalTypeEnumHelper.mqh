@@ -111,4 +111,42 @@ public:
     {
         return signalType == OPEN_BUY_MARKET || signalType == OPEN_SELL_MARKET;
     }
+
+    /**
+     * Provides string of comma separated trade signal enum values translated to string.
+     * */
+    static string FormatBinFlags(BinFlags &signals)
+    {
+        // Define each enumerator explicitly
+        const int signalTypes[] = {
+            TradeSignalTypeEnum::NONE,
+            TradeSignalTypeEnum::OPEN_BUY_MARKET,
+            TradeSignalTypeEnum::OPEN_BUY_LIMIT_ORDER,
+            TradeSignalTypeEnum::OPEN_BUY_STOP_ORDER,
+            TradeSignalTypeEnum::CLOSE_BUY_MARKET,
+            TradeSignalTypeEnum::DELETE_BUY_ORDER,
+            TradeSignalTypeEnum::OPEN_SELL_MARKET,
+            TradeSignalTypeEnum::OPEN_SELL_LIMIT_ORDER,
+            TradeSignalTypeEnum::OPEN_SELL_STOP_ORDER,
+            TradeSignalTypeEnum::CLOSE_SELL_MARKET,
+            TradeSignalTypeEnum::DELETE_SELL_ORDER};
+
+        string result = "";
+        string separator = "";
+        for (int i = 0; i < ArraySize(signalTypes); i++)
+        {
+            int flag = signalTypes[i];
+            if (signals.HasFlag(flag))
+            {
+                result += separator + EnumToString((TradeSignalTypeEnum)flag);
+            }
+
+            if (separator == "")
+            {
+                separator = ", ";
+            }
+        }
+
+        return result;
+    }
 };

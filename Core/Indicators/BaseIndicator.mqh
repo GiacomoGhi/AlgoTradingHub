@@ -1,11 +1,14 @@
 #include "../Libraries/BinFlags/BinFlags.mqh";
+#include "../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../Shared/Interfaces/ITradeSignal.mqh";
+#include "../Shared/Logger/Logger.mqh";
 #include "./IndicatorSignals.mqh";
 
 template <typename TSignalsTypeEnum>
 class BaseIndicator : public ITradeSignal
 {
 protected:
+    Logger *_logger;
     const string _symbol;
     const int _handle;
     ENUM_TIMEFRAMES _timeFrame;
@@ -15,6 +18,7 @@ protected:
     const TSignalsTypeEnum _closeSellSignal;
 
 private:
+    const string _className;
     BinFlags *_produceSignalTypeFlags;
 
 public:
@@ -22,11 +26,15 @@ public:
      * Constructor
      */
     BaseIndicator(
+        string className,
+        Logger &logger,
         string symbol,
         IndicatorSignals<TSignalsTypeEnum> &indicatorSignals,
         ENUM_TIMEFRAMES timeFrame = PERIOD_H1,
         int handle = 0)
-        : _symbol(symbol),
+        : _className(className),
+          _logger(&logger),
+          _symbol(symbol),
           _openBuySignal(indicatorSignals.OpenBuy.Item2),
           _openSellSignal(indicatorSignals.OpenSell.Item2),
           _closeBuySignal(indicatorSignals.CloseBuy.Item2),
@@ -60,6 +68,12 @@ public:
             _produceSignalTypeFlags.SetFlag(TradeSignalTypeEnum::CLOSE_SELL_MARKET);
             _produceSignalTypeFlags.SetFlag(TradeSignalTypeEnum::DELETE_SELL_ORDER);
         }
+
+        // Logs signals produced by the indicator
+        _logger.Log(
+            INFO,
+            _className,
+            "Produced signals: " + TradeSignalTypeEnumHelper::FormatBinFlags(_produceSignalTypeFlags));
     };
 
     /**

@@ -1,4 +1,5 @@
 #include "../../Shared/Models/ContextParams.mqh";
+#include "../../Shared/Logger/Logger.mqh";
 #include "./Models/RiskManagerParams.mqh";
 #include <Trade/AccountInfo.mqh>
 #include <Trade/SymbolInfo.mqh>
@@ -6,6 +7,8 @@
 class RiskManager
 {
 private:
+    const string _className;
+    Logger *_logger;
     ContextParams *_contextParams;
     RiskManagerParams *_params;
     CSymbolInfo _symbolInfo;
@@ -13,8 +16,13 @@ private:
 
 public:
     // Constructor
-    RiskManager(ContextParams &contextParams, RiskManagerParams &riskManagerParams)
-        : _contextParams(&contextParams),
+    RiskManager(
+        Logger &logger,
+        ContextParams &contextParams,
+        RiskManagerParams &riskManagerParams)
+        : _className("RiskManager"),
+          _logger(&logger),
+          _contextParams(&contextParams),
           _params(&riskManagerParams)
     {
         _symbolInfo.Name(contextParams.Symbol);
