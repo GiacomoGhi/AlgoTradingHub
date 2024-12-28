@@ -1,65 +1,78 @@
 #include "../BaseIndicator.mqh";
-#include "../IndicatorSignals.mqh";
 #include "./Models/TimeIndicatorSignalsEnum.mqh";
 
 class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
 {
 private:
-    const string _className;
+    /**
+     * Open trade hour.
+     */
     int _openTradeHour;
+
+    /**
+     * Close trade hour.
+     */
     int _closeTradeHour;
+
+    /**
+     * Range start hour.
+     */
     int _rangeStartHour;
+
+    /**
+     * Range end hour.
+     */
     int _rangeEndHour;
 
 public:
-    // Constructor
+    /**
+     * Constructor
+     */
     TimeIndicator(
         Logger &logger,
         string symbol,
-        IndicatorSignals<TimeIndicatorSignalsEnum> &indicatorSignals,
+        CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum> &signalTypeTriggerStore,
         int openTradeHour,
         int closeTradeHour,
         int rangeStartHour = 0,
-        int rangeStopHour = 0)
-        : _className("TimeIndicator"),
-          _openTradeHour(openTradeHour),
+        int rangeStopHour = 0,
+        string className = "TimeIndicator")
+        : _openTradeHour(openTradeHour),
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
-          BaseIndicator("TimeIndicator", &logger, symbol, indicatorSignals)
+          BaseIndicator(className, &logger, symbol, signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(_className);
     }
 
-    // Base class ITradeSignal implementation
-    bool IsValidSignal(TradeSignalTypeEnum signalType) override
+    /**
+     * Base class ITradeSignalProvider implementation
+     */
+    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
     {
-        switch (signalType)
+        for (int i = 0; i < _signalsStoreArraySize; i++)
         {
-        case OPEN_BUY_MARKET:
-        case OPEN_BUY_LIMIT_ORDER:
-        case OPEN_BUY_STOP_ORDER:
-            return IsTimeIndicatorValidSignal(this._openBuySignal);
+            // Variable for readability
+            TradeSignalTypeEnum signalType = _signalsStoreArray[i].Key();
 
-        case CLOSE_BUY_MARKET:
-        case DELETE_BUY_ORDER:
-            return IsTimeIndicatorValidSignal(this._closeBuySignal);
+            // Add entry if missing
+            bool isValidSignal = true;
+            if (!signalsStore.TryGetValue(signalType, isValidSignal))
+            {
+                signalsStore.Add(signalType, isValidSignal);
+            }
 
-        case OPEN_SELL_MARKET:
-        case OPEN_SELL_LIMIT_ORDER:
-        case OPEN_SELL_STOP_ORDER:
-            return IsTimeIndicatorValidSignal(this._openSellSignal);
-
-        case CLOSE_SELL_MARKET:
-        case DELETE_SELL_ORDER:
-            return IsTimeIndicatorValidSignal(this._closeSellSignal);
-        default:
-            return false;
+            // Update signal validity
+            isValidSignal &= IsTimeIndicatorValidSignal(_signalsStoreArray[i].Value());
+            signalsStore.TrySetValue(signalType, isValidSignal);
         }
     };
 
 private:
-    // Return signal method result given a signal type
+    /**
+     * Return signal method result given a signal type
+     */
     bool IsTimeIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)
     {
         switch (signalType)
@@ -78,26 +91,34 @@ private:
         };
     };
 
-    // Current hour equal to open trade hour
+    /**
+     * Current hour equal to open trade hour
+     */
     bool IsCurrentHourOpenHour()
     {
         return GetCurrentHour() == _openTradeHour;
     };
 
-    // Current hour equals to close trade hour
+    /**
+     * Current hour equals to close trade hour
+     */
     bool IsCurrentHourCloseHour()
     {
         return GetCurrentHour() == _closeTradeHour;
     };
 
-    // Range start hour <= Current time < Range end hour
+    /**
+     * Range start hour <= Current time < Range end hour
+     */
     bool IsCurrentTimeInRange()
     {
         int currentHour = GetCurrentHour();
         return _rangeStartHour <= currentHour && currentHour < _rangeEndHour;
     };
 
-    // Returns the current hour
+    /**
+     * Returns the current hour
+     */
     int GetCurrentHour()
     {
         MqlDateTime timeStruct;

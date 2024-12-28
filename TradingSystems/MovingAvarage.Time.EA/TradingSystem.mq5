@@ -8,59 +8,17 @@
 #property link "https://github.com/GiacomoGhi/AlgoTradingHub"
 #property version "1.00"
 
+// Include Algo Trading Hub components
 #include "../../Core/index.mqh";
 #include "../../Core/ATHExpertAdvisor.mqh";
 
-// Base system parameters
-input string __baseSystemInfoField = "Main parameters";
-input string __baseSystemName = "MovingAvarage.Time.EA";                           // Expert advisor name, comments and logs
-input ulong __baseSystemMagicNumber = 10000001;                                    // Expert advisor unique Id
-input TradingStyleTypeEnum __baseSystemTradingStyleType = DIRECT_MARKET_EXECUTION; // Trading style type
-input bool __baseSystemAllowMultiplePosition = false;                              // Allow multiple open positions
-input bool __baseSystemAllowLogging = false;                                       // Allow ea info logging
-
-// Risk parameters
-sinput string ___riskManagerInfoField = "";
-sinput string ___riskManagerInfoField1 = "Risk manager parameters";
-input SizeCalculationTypeEnum __riskManagerSizeCalculationType = SizeCalculationTypeEnum::FIXED_LOT_SIZE; // Size calculation type
-input double __riskManagerSizeValueOrBalancePercentage = 1;                                               // Lots, money or balace percent to risk
-input double __riskManagerMaxDailyDrowDownPercentage = 4.5;                                               // Max daily equity drow down
-input double __riskManagerMaxOverallDrawDown = 9.5;                                                       // Max total equity drow down
-
-// Trade levels parameters
-sinput string ___tradeLevelsInfoField = "";
-sinput string ___tradeLevelsInfoField1 = "Trade levels parameters";
-input int __tradeLevelsTakeProfitLenght = 0;                            // Take profit lenght
-input int __tradeLevelsStopLossLenght = 0;                              // Stop loss lenght
-input int __tradeLevelsOrderDistanceFromPrice = 0;                      // Order distance from price
-input ENUM_ORDER_TYPE_TIME __tradeLevelsOrderTypeTime = ORDER_TIME_GTC; // Order type time
-input int __tradeLevelsOrderExpirationHour = -1;                        // Order expiration hour
-
-// Moving avarage indicator parameters
-sinput string ___movingAvarageIndicatorInfoField = "";
-sinput string ___movingAvarageIndicatorInfoField1 = "Moving avarage indicator parameters";
-input ENUM_TIMEFRAMES __movingAvarageIndicatorTimeFrame = PERIOD_H1;                                                // Time frame
-input int __movingAvarageIndicatorPeriod = 15;                                                                      // Period
-input int __movingAvarageIndicatorShift = 0;                                                                        // Shift
-input ENUM_MA_METHOD __movingAvarageIndicatorMethod = MODE_SMA;                                                     // Method
-input ENUM_APPLIED_PRICE __movingAvarageIndicatorAppliedPrice = PRICE_CLOSE;                                        // Applied price
-input MovingAvarageSignalsEnum __movingAvarageIndicatorOpenBuySignal = MovingAvarageSignalsEnum::PRICE_CLOSE_ABOVE; // Open buy trade signal type
-input MovingAvarageSignalsEnum __movingAvarageIndicatorCloseBuySignal = MovingAvarageSignalsEnum::NONE;             // Close buy trade signal type
-input MovingAvarageSignalsEnum __movingAvarageIndicatorOpenSellSignal = MovingAvarageSignalsEnum::NONE;             // Open sell trade signal type
-input MovingAvarageSignalsEnum __movingAvarageIndicatorCloseSellSignal = MovingAvarageSignalsEnum::NONE;            // Close sell trade signal type
-
-// Time indicator parameters
-sinput string ___timeIndicatorInfoField = "";
-sinput string ___timeIndicatorInfoField1 = "Time indicator parameters";
-input ENUM_TIMEFRAMES __timeIndicatorTimeFrame = PERIOD_H1;                                                          // Time frame
-input int __timeIndicatorOpenTradeHour = 9;                                                                          // Open trade hour
-input int __timeIndicatorCloseTradeHour = 18;                                                                        // Close trade hour
-input int __timeIndicatorRangeStartHour = 0;                                                                         // Range start hour
-input int __timeIndicatorRangeStopHour = 0;                                                                          // Range stop hour
-input TimeIndicatorSignalsEnum __timeIndicatorOpenBuySignal = TimeIndicatorSignalsEnum::NONE;                        // Open buy trade signal type
-input TimeIndicatorSignalsEnum __timeIndicatorCloseBuySignal = TimeIndicatorSignalsEnum::CURRENT_HOUR_IS_CLOSE_HOUR; // Close buy trade signal type
-input TimeIndicatorSignalsEnum __timeIndicatorOpenSellSignal = TimeIndicatorSignalsEnum::NONE;                       // Open sell trade signal type
-input TimeIndicatorSignalsEnum __timeIndicatorCloseSellSignal = TimeIndicatorSignalsEnum::NONE;                      // Close sell trade signal type
+// Include input params global variables files
+#include "./Params/BaseSystemParams.0.mqh";
+#include "./Params/RiskParams.0.mqh";
+#include "./Params/TradeLevelsParams.0.mqh";
+#include "./Params/ExposureStatusIndicator.0.mqh";
+#include "./Params/MovingAvarageParams.0.mqh";
+#include "./Params/TimeIndicatorParams.0.mqh";
 
 // ATH Expert advisor object
 ATHExpertAdvisor *TradingSystem;
@@ -69,101 +27,76 @@ int OnInit()
 {
     // Logger
     Logger *logger = new Logger(
-        __baseSystemAllowLogging,
-        __baseSystemName,
-        __baseSystemMagicNumber);
+        __base_system_0_allow_logging,
+        __base_system_0_name,
+        __base_system_0_magic_number);
 
     // Trade signal list
-    ObjectList<ITradeSignal> *tradeSignalsList = new ObjectList<ITradeSignal>();
+    ObjectList<ITradeSignalProvider> *tradeSignalsList = new ObjectList<ITradeSignalProvider>();
 
-    // Moving avarage indicators singals
-    IndicatorSignals<MovingAvarageSignalsEnum> *movingAvarageIndicatorSignals = new IndicatorSignals<MovingAvarageSignalsEnum>(
-        // Open buy trade signal
-        new Tuple<bool, MovingAvarageSignalsEnum>(
-            __movingAvarageIndicatorOpenBuySignal == MovingAvarageSignalsEnum::NONE
-                ? false
-                : true,
-            __movingAvarageIndicatorOpenBuySignal),
-        // Close buy trade signal
-        new Tuple<bool, MovingAvarageSignalsEnum>(
-            __movingAvarageIndicatorCloseBuySignal == MovingAvarageSignalsEnum::NONE
-                ? false
-                : true,
-            __movingAvarageIndicatorCloseBuySignal),
-        // Open sell trade signal
-        new Tuple<bool, MovingAvarageSignalsEnum>(
-            __movingAvarageIndicatorOpenSellSignal == MovingAvarageSignalsEnum::NONE
-                ? false
-                : true,
-            __movingAvarageIndicatorOpenSellSignal),
-        // Open buy trade singal
-        new Tuple<bool, MovingAvarageSignalsEnum>(
-            __movingAvarageIndicatorCloseSellSignal == MovingAvarageSignalsEnum::NONE
-                ? false
-                : true,
-            __movingAvarageIndicatorCloseSellSignal));
+    // Exposure status indicator
+    CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum> *exposureStatusIndicatorSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>();
+    exposureStatusIndicatorSignalTypeTriggerStore.Add(
+        __exposure_status_indicator_0_signal_type_0,
+        __exposure_status_indicator_0_signal_trigger_0);
+
+    // Add exposure status indicator to trade signals list
+    tradeSignalsList.Append(
+        new ExposureStatusIndicator(
+            logger,
+            _Symbol,
+            __base_system_0_magic_number,
+            exposureStatusIndicatorSignalTypeTriggerStore));
+
+    // Moving avarage singals type and trigger associations
+    CHashMap<TradeSignalTypeEnum, MovingAvarageSignalsEnum> *movingAvarageSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, MovingAvarageSignalsEnum>();
+    movingAvarageSignalTypeTriggerStore.Add(
+        __moving_avarage_0_signal_type_0,
+        __moving_avarage_0_signal_trigger_0);
 
     // Add moving avarage to trade signals list
     tradeSignalsList.Append(
         new MovingAvarage(
             logger,
             _Symbol,
-            __movingAvarageIndicatorTimeFrame,
-            movingAvarageIndicatorSignals,
-            __movingAvarageIndicatorPeriod,
-            __movingAvarageIndicatorShift,
-            __movingAvarageIndicatorMethod,
-            __movingAvarageIndicatorAppliedPrice));
+            movingAvarageSignalTypeTriggerStore,
+            __moving_avarage_0_time_frame,
+            __moving_avarage_0_period,
+            __moving_avarage_0_shift,
+            __moving_avarage_0_method,
+            __moving_avarage_0_applied_price));
 
-    // Time indicator signals
-    IndicatorSignals<TimeIndicatorSignalsEnum> *timeIndicatorSignals = new IndicatorSignals<TimeIndicatorSignalsEnum>(
-        // Open buy trade signal
-        new Tuple<bool, TimeIndicatorSignalsEnum>(
-            __timeIndicatorOpenBuySignal == TimeIndicatorSignalsEnum::NONE
-                ? false
-                : true,
-            __timeIndicatorOpenBuySignal),
-        // Close buy trade signal
-        new Tuple<bool, TimeIndicatorSignalsEnum>(
-            __timeIndicatorCloseBuySignal == TimeIndicatorSignalsEnum::NONE
-                ? false
-                : true,
-            __timeIndicatorCloseBuySignal),
-        // Open sell trade signal
-        new Tuple<bool, TimeIndicatorSignalsEnum>(
-            __timeIndicatorOpenSellSignal == TimeIndicatorSignalsEnum::NONE
-                ? false
-                : true,
-            __timeIndicatorOpenSellSignal),
-        // Open buy trade singal
-        new Tuple<bool, TimeIndicatorSignalsEnum>(
-            __timeIndicatorCloseSellSignal == TimeIndicatorSignalsEnum::NONE
-                ? false
-                : true,
-            __timeIndicatorCloseSellSignal));
+    // Time indicator singals type and trigger associations
+    CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum> *timeIndicatorSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>();
+    timeIndicatorSignalTypeTriggerStore.Add(
+        __time_indicator_0_signal_type_0,
+        __time_indicator_0_signal_trigger_0);
+    timeIndicatorSignalTypeTriggerStore.Add(
+        __time_indicator_0_signal_type_1,
+        __time_indicator_0_signal_trigger_1);
 
     // Add time indicator to trade signals list
     tradeSignalsList.Append(
         new TimeIndicator(
             logger,
             _Symbol,
-            timeIndicatorSignals,
-            __timeIndicatorOpenTradeHour,
-            __timeIndicatorCloseTradeHour,
-            __timeIndicatorRangeStartHour,
-            __timeIndicatorRangeStopHour));
+            timeIndicatorSignalTypeTriggerStore,
+            __time_indicator_0_open_trade_hour,
+            __time_indicator_0_close_trade_hour,
+            __time_indicator_0_range_start_hour,
+            __time_indicator_0_range_stop_hour));
 
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(
-        __baseSystemMagicNumber,
-        __baseSystemName);
+        __base_system_0_magic_number,
+        __base_system_0_name);
 
     // Risk manager params
     RiskManagerParams *riskManagerParams = new RiskManagerParams(
-        __riskManagerSizeValueOrBalancePercentage,
-        __riskManagerMaxDailyDrowDownPercentage,
-        __riskManagerMaxOverallDrawDown,
-        __riskManagerSizeCalculationType);
+        __risk_manager_0_size_value_or_balance_percentage,
+        __risk_manager_0_max_daily_draw_down_percentage,
+        __risk_manager_0_max_overall_draw_down,
+        __risk_manager_0_size_calculation_type);
 
     // Signal manager params
     SignalManagerParams *signalManagerParams = new SignalManagerParams(tradeSignalsList);
@@ -175,11 +108,11 @@ int OnInit()
     FixedTradeLevels *fixedTradeLevels = new FixedTradeLevels(
         logger,
         contextParams,
-        __tradeLevelsTakeProfitLenght,
-        __tradeLevelsStopLossLenght,
-        __tradeLevelsOrderDistanceFromPrice,
-        __tradeLevelsOrderTypeTime,
-        __tradeLevelsOrderExpirationHour);
+        __trade_levels_take_profit_length,
+        __trade_levels_stop_loss_length,
+        __trade_levels_order_distance_from_price,
+        __trade_levels_order_type_time,
+        __trade_levels_order_expiration_hour);
 
     // Initialize ATH Expert Advisor
     TradingSystem = new ATHExpertAdvisor(

@@ -1,12 +1,15 @@
-#include "../../../Shared/Interfaces/ITradeSignal.mqh";
+#include "../../../Shared/Interfaces/ITradeSignalProvider.mqh";
 #include "../../../Libraries/List/ObjectList.mqh";
 
 class SignalManagerParams
 {
 public:
-    ObjectList<ITradeSignal> *TradeSignalProviders;
+    /**
+     * List of signal providers.
+     */
+    ObjectList<ITradeSignalProvider> *TradeSignalProviders;
 
     // Constructor
-    SignalManagerParams(ObjectList<ITradeSignal> &tradeSignalList)
-        : TradeSignalProviders(&tradeSignalList) {}
+    SignalManagerParams(ObjectList<ITradeSignalProvider> &tradeSignalProvidersList)
+        : TradeSignalProviders(&tradeSignalProvidersList) {}
 }

@@ -1,8 +1,5 @@
 enum TimeIndicatorSignalsEnum
 {
-    // Indicator will not produce signal.
-    NONE,
-
     // Current hour equal to open trade hour
     CURRENT_HOUR_IS_OPEN_HOUR,
 

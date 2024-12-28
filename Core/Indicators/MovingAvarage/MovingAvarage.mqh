@@ -1,32 +1,29 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/MovingAvarageSignalsEnum.mqh";
-#include "../IndicatorSignals.mqh";
 
 class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
 {
-private:
-    const string _className;
-
 public:
-    // Constructor
+    /**
+     * Constructor
+     */
     MovingAvarage(
         Logger &logger,
         string symbol,
+        CHashMap<TradeSignalTypeEnum, MovingAvarageSignalsEnum> &signalTypeTriggerStore,
         ENUM_TIMEFRAMES timeFrame,
-        IndicatorSignals<MovingAvarageSignalsEnum> &indicatorSignals,
         int period,
         int shift,
         ENUM_MA_METHOD method,
-        ENUM_APPLIED_PRICE appliedPrice)
-        : _className("MovingAvarage"),
-          BaseIndicator(
-              "MovingAvarage",
+        ENUM_APPLIED_PRICE appliedPrice,
+        string className = "MovingAvarage")
+        : BaseIndicator(
+              className,
               &logger,
               symbol,
-              indicatorSignals,
+              signalTypeTriggerStore,
               timeFrame,
-              iMA(
-                  symbol,
+              iMA(symbol,
                   timeFrame,
                   period,
                   shift,
@@ -36,37 +33,47 @@ public:
         _logger.LogInitCompleted(_className);
     }
 
-    // Base class ITradeSignal implementation
-    bool IsValidSignal(TradeSignalTypeEnum signalType) override
+    /**
+     * Base class ITradeSignalProvider implementation
+     */
+    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
     {
-        switch (signalType)
+        for (int i = 0; i < _signalsStoreArraySize; i++)
         {
-        case OPEN_BUY_MARKET:
-        case OPEN_BUY_LIMIT_ORDER:
-        case OPEN_BUY_STOP_ORDER:
-            return IsMovingAvarageValidSignal(this._openBuySignal);
+            // Variable for readability
+            TradeSignalTypeEnum signalType = _signalsStoreArray[i].Key();
 
-        case CLOSE_BUY_MARKET:
-        case DELETE_BUY_ORDER:
-            return IsMovingAvarageValidSignal(this._closeBuySignal);
+            // Add entry if missing
+            bool isValidSignal = true;
+            if (!signalsStore.TryGetValue(signalType, isValidSignal))
+            {
+                signalsStore.Add(signalType, isValidSignal);
+            }
 
-        case OPEN_SELL_MARKET:
-        case OPEN_SELL_LIMIT_ORDER:
-        case OPEN_SELL_STOP_ORDER:
-            return IsMovingAvarageValidSignal(this._openSellSignal);
+            // Update signal validity
+            isValidSignal &= IsMovingAvarageValidSignal(_signalsStoreArray[i].Value());
 
-        case CLOSE_SELL_MARKET:
-        case DELETE_SELL_ORDER:
-            return IsMovingAvarageValidSignal(this._closeSellSignal);
-        default:
-            return false;
+            _logger.Log(
+                INFO,
+                _className,
+                EnumToString(signalType) + " is valid? " + (string)isValidSignal);
+
+            signalsStore.TrySetValue(signalType, isValidSignal);
         }
     };
 
 private:
-    // Return signal method result given a signal type
+    /**
+     * Return signal method result given a signal type
+     */
     bool IsMovingAvarageValidSignal(MovingAvarageSignalsEnum signalType)
     {
+
+        _logger.Log(
+            INFO,
+            _className,
+            "Validating using... " + EnumToString(signalType));
+
         switch (signalType)
         {
         case PRICE_CLOSE_ABOVE:
@@ -98,49 +105,73 @@ private:
         };
     };
 
-    // Check if previous candle close price is above the moving avarage
+    /**
+     * Check if previous candle close price is above the moving avarage
+     */
     bool IsCloseAboveSignal()
     {
-        return MarketHelper::GetClosePrice(this._symbol) > this.GetIndicatorValue(_handle, 1);
+        double prevCandleClosePrice = MarketHelper::GetClosePrice(this._symbol);
+        double prevCandleIndicatorValue = this.GetIndicatorValue(1);
+
+        _logger.Log(
+            INFO,
+            _className,
+            "prevCandleClosePrice=" + (string)prevCandleClosePrice + "; prevCandleIndicatorValue=" + (string)prevCandleIndicatorValue);
+
+        return prevCandleClosePrice > prevCandleIndicatorValue;
     };
 
-    // Check if previous candle close price is below the moving avarage
+    /**
+     * Check if previous candle close price is below the moving avarage
+     */
     bool IsCloseBelowSignal()
     {
         return MarketHelper::GetClosePrice(this._symbol) < this.GetIndicatorValue(_handle, 1);
     };
 
-    // Check if price previous close was below and price current close is below
+    /**
+     * Check if price previous close was below and price current close is below
+     */
     bool IsPriceUpwardCrossSignal()
     {
         return false;
     };
 
-    // Check if price previous close was above and price current close is below
+    /**
+     * Check if price previous close was above and price current close is below
+     */
     bool IsPriceDownwardCrossSignal()
     {
         return false;
     };
 
-    // Check if moving avarage is in upward direction
+    /**
+     * Check if moving avarage is in upward direction
+     */
     bool IsUpwardDirectionSignal()
     {
         return false;
     };
 
-    // Check if moving avarage is in downward direction
+    /**
+     * Check if moving avarage is in downward direction
+     */
     bool IsDownwardDirectionSignal()
     {
         return false;
     };
 
-    // Check if moving avarage turned from downward to an upward direction
+    /**
+     * Check if moving avarage turned from downward to an upward direction
+     */
     bool IsUpwardTurnAroundSignal()
     {
         return false;
     };
 
-    // Check if moving avarage turned from upward to a downward direction
+    /**
+     * Check if moving avarage turned from upward to a downward direction
+     */
     bool IsDownwardTurnAroundSignal()
     {
         return false;

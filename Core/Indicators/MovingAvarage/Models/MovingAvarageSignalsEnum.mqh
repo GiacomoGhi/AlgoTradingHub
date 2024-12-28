@@ -1,8 +1,5 @@
 enum MovingAvarageSignalsEnum
 {
-    // Indicator will not produce signal.
-    NONE,
-
     // Price close is above the moving avarage
     PRICE_CLOSE_ABOVE,
 

@@ -1,93 +1,92 @@
+#include <Generic\HashMap.mqh>;
 #include "./Models/SignalManagerParams.mqh";
+#include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
 #include "../../Shared/Logger/Logger.mqh";
-#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 
-class SignalManager : public ITradeSignalTypeEnumHelperStrategy
+class SignalManager
 {
 private:
+    /**
+     * Name of the class.
+     */
     const string _className;
+
+    /**
+     * Logger.
+     */
     Logger *_logger;
-    ObjectList<ITradeSignal> *_tradeSignalProviders;
-    BasicList<int> *_signalsToExecute;
+
+    /**
+     * List of signal providers objects.
+     */
+    ObjectList<ITradeSignalProvider> *_tradeSignalProviders;
+
+    /**
+     * Store of signals type and boolean flag, if true the signal will be executed.
+     */
+    CHashMap<TradeSignalTypeEnum, bool> *_signalsStore;
 
 public:
     /**
      * Constructor
-     * @param signalManagerParams Parameters containing the trade signals list.
      */
     SignalManager(
         Logger &logger,
-        SignalManagerParams &signalManagerParams)
-        : _className("SignalManager"),
+        SignalManagerParams &signalManagerParams,
+        string className = "SignalManager")
+        : _className(className),
           _logger(&logger),
-          _tradeSignalProviders(signalManagerParams.TradeSignalProviders)
+          _tradeSignalProviders(signalManagerParams.TradeSignalProviders),
+          _signalsStore(new CHashMap<TradeSignalTypeEnum, bool>)
     {
         _logger.LogInitCompleted(_className);
     }
 
     /**
-     * Checks indicators and updates by reference the received singals list.
+     * Checks indicators and store signals to execute in the provided list overwriting previous content.
      */
-    void GetSignalsToExecute(BasicList<int> &receivedSignalsToExecute)
+    void GetSignalsToExecute(BasicList<TradeSignalTypeEnum> &signalsToExecute)
     {
-        // Set internal list pointer to received list
-        _signalsToExecute = &receivedSignalsToExecute;
-
         // Clear previous signals
-        _signalsToExecute.RemoveAll();
+        signalsToExecute.RemoveAll();
+        _signalsStore.Clear();
 
-        // Execute this.ForEachAlgorithmInterface()
-        // For each value of the enum TradeSignalTypeEnum
-        TradeSignalTypeEnumHelper::ForEach(&this);
+        // Use all signal providers to update signal store
+        for (int i = 0; i < _tradeSignalProviders.Count(); i++)
+        {
+            _tradeSignalProviders[i].UpdateSignalStore(_signalsStore);
+        }
+
+        // Copy store to array to allow looping
+        CKeyValuePair<TradeSignalTypeEnum, bool> *signalsStoreArray[];
+        if (_signalsStore.CopyTo(signalsStoreArray) == 0)
+        {
+            return;
+        }
+
+        string infoLogString = "Signals to execute: ";
+        for (int i = 0; i < ArraySize(signalsStoreArray); i++)
+        {
+            // Store signal as to execute if value in store is true.
+            if (signalsStoreArray[i].Value())
+            {
+                // Variable for readability
+                TradeSignalTypeEnum signal = signalsStoreArray[i].Key();
+
+                // Add signal to execute
+                signalsToExecute.Append(signal);
+
+                // Prepare info log string
+                infoLogString += EnumToString(signal);
+                if (i > 0)
+                {
+                    infoLogString += ", ";
+                }
+            }
+        }
+
+        _logger.Log(INFO, _className, infoLogString);
 
         return;
     }
-
-    /**
-     * ITradeSignalTypeEnumHelperStrategy method implementation
-     * Iterates over each signal type and sets the corresponding flag if valid.
-     * @param signalType The signal type to process.
-     */
-    void ForEachAlgorithmInterface(int signalType)
-    {
-        if (this.IsValidSignal((TradeSignalTypeEnum)signalType))
-        {
-            _signalsToExecute.Append(signalType);
-        }
-    }
-
-private:
-    /**
-     * Validates a signal based on the indicators in the trade signals list.
-     * @param signalType The signal type to validate.
-     * @return True if the signal is valid, false otherwise.
-     */
-    bool IsValidSignal(TradeSignalTypeEnum signalType)
-    {
-        // Validated singals counter
-        int validatedSignals = 0;
-
-        // Total amount of singals that needs to be valid
-        int totalTradeSignalsToCheck = _tradeSignalProviders.Count();
-
-        // Valodate signal for each signal provider
-        for (int i = 0; i < _tradeSignalProviders.Count(); i++)
-        {
-            ITradeSignal *tradeSignal = _tradeSignalProviders[i];
-            if (!tradeSignal.ProduceSignal(signalType))
-            {
-                // Reduce the amount of trade signals that needs to be valid
-                totalTradeSignalsToCheck--;
-                continue;
-            }
-
-            if (tradeSignal.IsValidSignal(signalType))
-            {
-                validatedSignals++;
-            }
-        }
-
-        // Signal is valid if at least one is validated, and all required signals are checked
-        return (validatedSignals > 0 && validatedSignals == totalTradeSignalsToCheck);
-    };
 };

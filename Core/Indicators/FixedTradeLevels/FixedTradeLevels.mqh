@@ -7,13 +7,44 @@
 class FixedTradeLevels : public ITradeLevelsIndicator
 {
 private:
+    /**
+     * Name of the class.
+     */
     const string _className;
+
+    /**
+     * Logger
+     */
     Logger *_logger;
+
+    /**
+     * Context params
+     */
     ContextParams *_contextParams;
+
+    /**
+     * Take profit level distance from open price.
+     */
     int _takeProfitLenght;
+
+    /**
+     * Stop profit level distance from open price.
+     */
     int _stopLossLenght;
+
+    /**
+     * Pending order distance from current price.
+     */
     int _orderDistanceFromCurrentPrice;
+
+    /**
+     * Order tpye time enum.
+     */
     ENUM_ORDER_TYPE_TIME _orderTypeTime;
+
+    /**
+     * Order expiration hour.
+     */
     int _orderExpirationHour;
 
 public:
@@ -27,8 +58,9 @@ public:
         int stopLossLenght = 0,
         int orderDistanceFromCurrentPrice = 0,
         ENUM_ORDER_TYPE_TIME orderTypeTime = ORDER_TIME_GTC,
-        int orderExpirationHour = -1)
-        : _className("FixedTradeLevels"),
+        int orderExpirationHour = -1,
+        string className = "FixedTradeLevels")
+        : _className(className),
           _logger(&logger),
           _contextParams(&contextParams),
           _takeProfitLenght(takeProfitLenght),
