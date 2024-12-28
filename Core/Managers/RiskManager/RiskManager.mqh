@@ -7,15 +7,40 @@
 class RiskManager
 {
 private:
+    /**
+     * Name of the class.
+     */
     const string _className;
+
+    /**
+     * Logger.
+     */
     Logger *_logger;
+
+    /**
+     * Context params.
+     */
     ContextParams *_contextParams;
+
+    /**
+     * Risk manager params.
+     */
     RiskManagerParams *_params;
+
+    /**
+     * Symbol info utility object.
+     */
     CSymbolInfo _symbolInfo;
+
+    /**
+     * Account info utility object.
+     */
     CAccountInfo _accountInfo;
 
 public:
-    // Constructor
+    /**
+     * Constructor
+     */
     RiskManager(
         Logger &logger,
         ContextParams &contextParams,
@@ -28,7 +53,9 @@ public:
         _symbolInfo.Name(contextParams.Symbol);
     }
 
-    // Calcualte position size based on required risk percentage
+    /**
+     * Calcualte position size based on required risk percentage
+     */
     double GetTradeVolume(double entryPrice = 0, double stopLossPrice = 0)
     {
         // TODO perform size validation before returning

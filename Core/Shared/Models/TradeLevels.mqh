@@ -1,10 +1,29 @@
 class TradeLevels
 {
 public:
+  /**
+   * Take profit price.
+   */
   const double TakeProfit;
+
+  /**
+   * Stop loss price.
+   */
   const double StopLoss;
+
+  /**
+   * Order entry price
+   */
   const double OrderEntryPrice;
+
+  /**
+   * Order time tpye enum
+   */
   const ENUM_ORDER_TYPE_TIME OrderTypeTime;
+
+  /**
+   * Order expiration time
+   */
   const datetime OrderExpriation;
 
   /**

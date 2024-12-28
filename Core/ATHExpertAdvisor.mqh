@@ -4,23 +4,49 @@
 class ATHExpertAdvisor
 {
 private:
+    /**
+     * Name of the class.
+     */
     const string _className;
+
+    /**
+     * Logger.
+     */
     Logger *_logger;
+
+    /**
+     * Signal manager object.
+     */
     SignalManager *_signalManager;
+
+    /**
+     * Trade manager object.
+     */
     TradeManager *_tradeManager;
+
+    /**
+     * Trade levels object.
+     */
     ITradeLevelsIndicator *_tradeLevelsIndicator;
-    BasicList<int> _signalsToExecute;
+
+    /**
+     * Signals to execute list.
+     */
+    BasicList<TradeSignalTypeEnum> _signalsToExecute;
 
 public:
-    // Constructor
+    /**
+     * Constructor
+     */
     ATHExpertAdvisor(
         Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
         SignalManagerParams &signalManagerParams,
-        ITradeLevelsIndicator &tradeLevelsIndicator)
-        : _className("ATHExpertAdvisor"),
+        ITradeLevelsIndicator &tradeLevelsIndicator,
+        string className = "ATHExpertAdvisor")
+        : _className(className),
           _logger(&logger),
           _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
@@ -37,11 +63,14 @@ public:
             &signalManagerParams);
 
         // signals to execute list
-        _signalsToExecute = new BasicList<int>();
+        _signalsToExecute = new BasicList<TradeSignalTypeEnum>();
 
         _logger.LogInitCompleted(_className);
     };
 
+    /**
+     * ATH EA OnTick implementation.
+     */
     void OnTick()
     {
         // Gets signals that needs to be executed
@@ -87,7 +116,7 @@ public:
         for (int i = 0; i < _signalsToExecute.Count(); i++)
         {
             // Cast
-            TradeSignalTypeEnum tradeSignal = (TradeSignalTypeEnum)_signalsToExecute.Get(i);
+            TradeSignalTypeEnum tradeSignal = _signalsToExecute.Get(i);
 
             // Execute signal
             _tradeManager.Execute(

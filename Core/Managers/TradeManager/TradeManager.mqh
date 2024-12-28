@@ -9,24 +9,62 @@
 class TradeManager
 {
 private:
+    /**
+     * Name of the class.
+     */
     const string _className;
+
+    /**
+     * Logger.
+     */
     Logger *_logger;
+
+    /**
+     * Context params.
+     */
     ContextParams *_contextParams;
+
+    /**
+     * CTrade object to access market api.
+     */
     CTrade _market;
+
+    /**
+     * Expert advisor unique identifier.
+     */
     ulong _magicNumber;
+
+    /**
+     * String to use in trade comments.
+     */
     string _comment;
+
+    /**
+     * Risk manager used internally.
+     */
     RiskManager *_riskManager;
+
+    /**
+     * Buy position ticket store.
+     */
     ulong _buyPositionTicket;
+
+    /**
+     * Sell position ticket store.
+     */
     ulong _sellPositionTicket;
 
 public:
-    // Constructor
+    /**
+     * Constructor.
+     */
     TradeManager(
         Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        RiskManagerParams &riskManagerParams)
-        : _className("TradeManager"),
+        RiskManagerParams &riskManagerParams,
+        string className = "TradeManager")
+        : _className(className),
           _logger(&logger),
           _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
@@ -48,8 +86,10 @@ public:
         _logger.LogInitCompleted(_className);
     };
 
-    // Close or delete singals only,
-    // overload with TradeLevels to execute a new position or order.
+    /**
+     * Close or delete singals only,
+     * overload with TradeLevels to execute a new position or order.
+     */
     void Execute(TradeSignalTypeEnum signalType)
     {
         _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
@@ -93,7 +133,9 @@ public:
         IsResultRetcode(TRADE_RETCODE_DONE);
     }
 
-    // Open a new position or order in the market.
+    /**
+     * Open a new position or order in the market.
+     */
     void Execute(TradeSignalTypeEnum signalType, TradeLevels &tradeLevels)
     {
         _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
@@ -133,7 +175,9 @@ public:
             tradeLevels.OrderExpriation);
     }
 
-    // Close all position with matching symbol and magic number
+    /**
+     * Close all position with matching symbol and magic number
+     */
     void PositionCloseAll()
     {
         // For all open positions
@@ -152,7 +196,9 @@ public:
         }
     }
 
-    // Delete all orders with matching symbol and magic number
+    /**
+     * Delete all orders with matching symbol and magic number
+     */
     void OrderDeleteAll()
     {
         // For all placed orders
@@ -171,32 +217,42 @@ public:
         }
     }
 
-    // Returns true if there is an active buy position
+    /**
+     * Returns true if there is an active buy position
+     */
     bool IsBuyPositionOpen()
     {
         return PositionSelectByTicket(_buyPositionTicket);
     }
 
-    // Returns true if there is an active sell position
+    /**
+     * Returns true if there is an active sell position
+     */
     bool IsSellPositionOpen()
     {
         return PositionSelectByTicket(_sellPositionTicket);
     }
 
-    // Returns true if there is an active buy order
+    /**
+     * Returns true if there is an active buy order
+     */
     bool IsBuyOrderPlaced()
     {
         return OrderSelect(_buyPositionTicket);
     }
 
-    // Returns true if there is an active sell order
+    /**
+     * Returns true if there is an active sell order
+     */
     bool IsSellOrderPlaced()
     {
         return OrderSelect(_sellPositionTicket);
     }
 
 private:
-    // Open market position and check result code
+    /**
+     * Open market position and check result code
+     */
     void ExecuteInternal(
         TradeSignalTypeEnum signalType,
         double takeProfit,
@@ -255,7 +311,9 @@ private:
         }
     }
 
-    // Place market order and check result code
+    /**
+     * Place market order and check result code
+     */
     void ExecuteInternal(
         TradeSignalTypeEnum signalType,
         double takeProfit,
@@ -352,7 +410,9 @@ private:
         return SymbolInfoDouble(_contextParams.Symbol, SYMBOL_BID);
     };
 
-    // Check trade request result with provided ret code
+    /**
+     * Check trade request result with provided ret code
+     */
     bool IsResultRetcode(uint retcode)
     {
         // Check result
@@ -377,7 +437,9 @@ private:
         return true;
     };
 
-    // Find all positions with matching magic number and symbol
+    /**
+     * Find all positions with matching magic number and symbol
+     */
     void RetriveOpenPositions()
     {
         // For all open positions
@@ -413,7 +475,9 @@ private:
         }
     }
 
-    // Find all orders with matching magic number and symbol
+    /**
+     * Find all orders with matching magic number and symbol
+     */
     void RetriveOpenOrders()
     {
         // For all placed orders

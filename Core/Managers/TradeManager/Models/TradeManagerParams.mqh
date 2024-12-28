@@ -1,12 +1,19 @@
 class TradeManagerParams
 {
 public:
-    const ulong MagicNumber;
-    const string Comment;
+  /**
+   * Magic number.
+   */
+  const ulong MagicNumber;
 
-    TradeManagerParams(
-        ulong magicNumber,
-        string comment)
-        : MagicNumber(magicNumber),
-          Comment(comment) {};
+  /**
+   * Trades comment.
+   */
+  const string Comment;
+
+  TradeManagerParams(
+      ulong magicNumber,
+      string comment)
+      : MagicNumber(magicNumber),
+        Comment(comment) {};
 }
