@@ -1,9 +1,14 @@
+#include "../../Libraries/List/ObjectList.mqh";
+#include "../../Libraries/List/BasicList.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
 #include "../../Shared/Models/TradeLevels.mqh";
 #include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
+#include "../../Shared/Helpers/MarketHelper.mqh";
 #include "../RiskManager/RiskManager.mqh"
 #include "./Models/TradeManagerParams.mqh";
+#include "./Models/TradeTypeEnumHelper.mqh";
+#include <Generic/HashMap.mqh>
 #include <Trade/Trade.mqh>;
 
 class TradeManager
@@ -54,6 +59,16 @@ private:
      */
     ulong _sellPositionTicket;
 
+    /**
+     * Hash map of trades tickets (keys) and their type (values).
+     */
+    ObjectList<CKeyValuePair<ulong, TradeTypeEnum>> *_tradesStore;
+
+    /**
+     * Tickets of trades not correctly voided.
+     */
+    BasicList<ulong> *_tradesToVoidStore;
+
 public:
     /**
      * Constructor.
@@ -78,7 +93,10 @@ public:
             &contextParams,
             &riskManagerParams);
 
-        // TODO Manage only positions or orders from context settings
+        // Initialize trades stores
+        _tradesStore = new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>();
+        _tradesToVoidStore = new BasicList<ulong>();
+
         // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
@@ -92,45 +110,60 @@ public:
      */
     void Execute(TradeSignalTypeEnum signalType)
     {
-        _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
-
         if (TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
             _logger.Log(ERROR, _className, "Unsupported signal type");
             return;
         }
 
-        // Close market position
-        if (TradeSignalTypeEnumHelper::IsMarketType(signalType))
+        // Void trades with matching type
+        TradeTypeEnum tradeType = TradeTypeEnumHelper::Map(signalType);
+        for (int i = 0; i < _tradesStore.Count(); i++)
         {
-            // Close buy
-            if (signalType == CLOSE_BUY_MARKET && IsBuyPositionOpen())
+            // Get trade
+            CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+            if (trade.Value() != tradeType)
             {
-                _market.PositionClose(_buyPositionTicket);
+                continue;
             }
-            // Close sell
-            else if (signalType == CLOSE_SELL_MARKET && IsSellPositionOpen())
-            {
-                _market.PositionClose(_sellPositionTicket);
-            }
-        }
-        // Delete order
-        else
-        {
-            // Delete buy order
-            if (signalType == DELETE_BUY_ORDER && IsBuyOrderPlaced())
-            {
-                _market.OrderDelete(_buyPositionTicket);
-            }
-            // Delete sell order
-            else if (signalType == DELETE_SELL_ORDER && IsSellOrderPlaced())
-            {
-                _market.OrderDelete(_sellPositionTicket);
-            }
-        }
 
-        // Check result
-        IsResultRetcode(TRADE_RETCODE_DONE);
+            // Delete order
+            const ulong tradeTicket = trade.Key();
+            if (OrderSelect(tradeTicket))
+            {
+                _market.OrderDelete(tradeTicket);
+            }
+            // Close position
+            else if (PositionSelectByTicket(tradeTicket))
+            {
+                _market.PositionClose(tradeTicket);
+            }
+            // Trade closed from user or another EA
+            else
+            {
+                // Info log
+                _logger.Log(
+                    ERROR,
+                    _className,
+                    "Stored trade not found, ticket: " + (string)tradeTicket);
+
+                // Remove from store
+                _tradesStore.Remove(trade);
+
+                // Adjust loop index and exit
+                i--;
+                continue;
+            }
+
+            // Check result
+            if (IsResultRetcode(TRADE_RETCODE_PLACED))
+            {
+                continue;
+            }
+
+            // Trades might not be closed due to market close condition
+            _tradesToVoidStore.Append(tradeTicket);
+        }
     }
 
     /**
@@ -138,8 +171,6 @@ public:
      */
     void Execute(TradeSignalTypeEnum signalType, TradeLevels &tradeLevels)
     {
-        _logger.Log(INFO, _className, "Executing: " + EnumToString(signalType));
-
         // Exit if signal is not an "open" type
         if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
@@ -173,6 +204,62 @@ public:
             tradeLevels.OrderEntryPrice,
             tradeLevels.OrderTypeTime,
             tradeLevels.OrderExpriation);
+    }
+
+    /**
+     * Completes trade voidance, ensure all trades that received a close or delete signal are
+     * voided.
+     */
+    void CompleteTradeVoidance()
+    {
+        if (_tradesToVoidStore.Count() == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _tradesToVoidStore.Count(); i++)
+        {
+            const ulong tradeTicket = _tradesToVoidStore.Get(i);
+
+            // Delete order
+            if (OrderSelect(tradeTicket))
+            {
+                _market.OrderDelete(tradeTicket);
+            }
+            // Close position
+            else if (PositionSelectByTicket(tradeTicket))
+            {
+                _market.PositionClose(tradeTicket);
+            }
+            // Trade closed from user or another EA
+            else
+            {
+                // Info log
+                _logger.Log(
+                    ERROR,
+                    _className,
+                    "Stored trade not found, ticket: " + (string)tradeTicket);
+
+                // Remove from store
+                _tradesToVoidStore.Remove(tradeTicket);
+
+                // Adjust loop index and exit
+                i--;
+                continue;
+            }
+
+            // Check result
+            if (!IsResultRetcode(TRADE_RETCODE_PLACED))
+            {
+                continue;
+            }
+
+            // Remove from store
+            _tradesToVoidStore.Remove(tradeTicket);
+
+            // Adjust loop index and exit
+            i--;
+        }
     }
 
     /**
@@ -217,38 +304,6 @@ public:
         }
     }
 
-    /**
-     * Returns true if there is an active buy position
-     */
-    bool IsBuyPositionOpen()
-    {
-        return PositionSelectByTicket(_buyPositionTicket);
-    }
-
-    /**
-     * Returns true if there is an active sell position
-     */
-    bool IsSellPositionOpen()
-    {
-        return PositionSelectByTicket(_sellPositionTicket);
-    }
-
-    /**
-     * Returns true if there is an active buy order
-     */
-    bool IsBuyOrderPlaced()
-    {
-        return OrderSelect(_buyPositionTicket);
-    }
-
-    /**
-     * Returns true if there is an active sell order
-     */
-    bool IsSellOrderPlaced()
-    {
-        return OrderSelect(_sellPositionTicket);
-    }
-
 private:
     /**
      * Open market position and check result code
@@ -269,7 +324,7 @@ private:
         string symbol = _contextParams.Symbol;
         if (signalType == OPEN_BUY_MARKET)
         {
-            double askPrice = GetAskPrice();
+            double askPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
 
             _market.Buy(
                 _riskManager
@@ -282,7 +337,7 @@ private:
         }
         else if (signalType == OPEN_SELL_MARKET)
         {
-            double bidPrice = GetBidPrice();
+            double bidPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
 
             _market.Sell(
                 _riskManager
@@ -300,15 +355,11 @@ private:
             return;
         }
 
-        // Save position ticket
-        if (signalType == OPEN_SELL_MARKET)
-        {
-            _sellPositionTicket = _market.ResultDeal();
-        }
-        else
-        {
-            _buyPositionTicket = _market.ResultDeal();
-        }
+        // Store into trades tickets store
+        _tradesStore.Append(
+            new CKeyValuePair<ulong, TradeTypeEnum>(
+                _market.ResultDeal(),
+                TradeTypeEnumHelper::Map(signalType)));
     }
 
     /**
@@ -387,28 +438,12 @@ private:
             return;
         }
 
-        // Save order ticket
-        if (signalType == OPEN_BUY_LIMIT_ORDER || signalType == OPEN_BUY_STOP_ORDER)
-        {
-            _buyPositionTicket = _market.ResultDeal();
-        }
-        else
-        {
-            _sellPositionTicket = _market.ResultDeal();
-        }
+        // Store into trades tickets store
+        _tradesStore.Append(
+            new CKeyValuePair<ulong, TradeTypeEnum>(
+                _market.ResultDeal(),
+                TradeTypeEnumHelper::Map(signalType)));
     }
-
-    // Get ask price
-    double GetAskPrice()
-    {
-        return SymbolInfoDouble(_contextParams.Symbol, SYMBOL_ASK);
-    };
-
-    // Get bid price
-    double GetBidPrice()
-    {
-        return SymbolInfoDouble(_contextParams.Symbol, SYMBOL_BID);
-    };
 
     /**
      * Check trade request result with provided ret code
@@ -453,19 +488,15 @@ private:
                 if (PositionGetInteger(POSITION_MAGIC) == _magicNumber && PositionGetString(POSITION_SYMBOL) == _contextParams.Symbol)
                 {
                     // Get position type
-                    ENUM_POSITION_TYPE type = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
+                    ENUM_POSITION_TYPE positionType = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
 
-                    // Type buy
-                    if (type == POSITION_TYPE_BUY)
-                    {
-                        _buyPositionTicket = ticket;
-                    }
-                    // Type sell
-                    else if (type == POSITION_TYPE_SELL)
-                    {
-                        _sellPositionTicket = ticket;
-                    }
+                    // Store into trades tickets store
+                    _tradesStore.Append(
+                        new CKeyValuePair<ulong, TradeTypeEnum>(
+                            ticket,
+                            TradeTypeEnumHelper::Map(positionType)));
 
+                    // Info log
                     _logger.Log(
                         INFO,
                         _className,
@@ -491,19 +522,15 @@ private:
                 if (OrderGetInteger(ORDER_MAGIC) == _magicNumber && OrderGetString(ORDER_SYMBOL) == _contextParams.Symbol)
                 {
                     // Get order type
-                    ENUM_ORDER_TYPE type = (ENUM_ORDER_TYPE)(OrderGetInteger(ORDER_TYPE));
+                    ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)(OrderGetInteger(ORDER_TYPE));
 
-                    // Type buy
-                    if (type == ORDER_TYPE_BUY_STOP || type == ORDER_TYPE_BUY_LIMIT)
-                    {
-                        _buyPositionTicket = ticket;
-                    }
-                    // Type sell
-                    else
-                    {
-                        _sellPositionTicket = ticket;
-                    }
+                    // Store into trades tickets store
+                    _tradesStore.Append(
+                        new CKeyValuePair<ulong, TradeTypeEnum>(
+                            ticket,
+                            TradeTypeEnumHelper::Map(orderType)));
 
+                    // Info log
                     _logger.Log(
                         INFO,
                         _className,

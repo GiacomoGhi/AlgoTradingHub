@@ -73,6 +73,9 @@ public:
      */
     void OnTick()
     {
+        // Delete trades that failed to be deleted
+        _tradeManager.CompleteTradeVoidance();
+
         // Gets signals that needs to be executed
         _signalManager.GetSignalsToExecute(&_signalsToExecute);
 
@@ -82,28 +85,46 @@ public:
         }
 
         // Execute close and delete signals
+        // Close buy position
         if (_signalsToExecute.Contains(CLOSE_BUY_MARKET))
         {
             _tradeManager.Execute(CLOSE_BUY_MARKET);
             _signalsToExecute.Remove(CLOSE_BUY_MARKET);
         }
 
-        if (_signalsToExecute.Contains(DELETE_BUY_ORDER))
+        // Delete buy limit order
+        if (_signalsToExecute.Contains(DELETE_BUY_LIMIT_ORDER))
         {
-            _tradeManager.Execute(DELETE_BUY_ORDER);
-            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _tradeManager.Execute(DELETE_BUY_LIMIT_ORDER);
+            _signalsToExecute.Remove(DELETE_BUY_LIMIT_ORDER);
         }
 
+        // Delete buy stop order
+        if (_signalsToExecute.Contains(DELETE_BUY_STOP_ORDER))
+        {
+            _tradeManager.Execute(DELETE_BUY_STOP_ORDER);
+            _signalsToExecute.Remove(DELETE_BUY_STOP_ORDER);
+        }
+
+        // Close sell position
         if (_signalsToExecute.Contains(CLOSE_SELL_MARKET))
         {
             _tradeManager.Execute(CLOSE_SELL_MARKET);
-            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _signalsToExecute.Remove(CLOSE_SELL_MARKET);
         }
 
-        if (_signalsToExecute.Contains(DELETE_SELL_ORDER))
+        // Delete sell limit order
+        if (_signalsToExecute.Contains(DELETE_SELL_LIMIT_ORDER))
         {
-            _tradeManager.Execute(DELETE_SELL_ORDER);
-            _signalsToExecute.Remove(CLOSE_BUY_MARKET);
+            _tradeManager.Execute(DELETE_SELL_LIMIT_ORDER);
+            _signalsToExecute.Remove(DELETE_SELL_LIMIT_ORDER);
+        }
+
+        // Delete sell stop order
+        if (_signalsToExecute.Contains(DELETE_SELL_STOP_ORDER))
+        {
+            _tradeManager.Execute(DELETE_SELL_STOP_ORDER);
+            _signalsToExecute.Remove(DELETE_SELL_STOP_ORDER);
         }
 
         // Exit if empty
@@ -115,10 +136,8 @@ public:
         // Execute open trades signals
         for (int i = 0; i < _signalsToExecute.Count(); i++)
         {
-            // Cast
-            TradeSignalTypeEnum tradeSignal = _signalsToExecute.Get(i);
-
             // Execute signal
+            TradeSignalTypeEnum tradeSignal = _signalsToExecute.Get(i);
             _tradeManager.Execute(
                 tradeSignal,
                 _tradeLevelsIndicator
