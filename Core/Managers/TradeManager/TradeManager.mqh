@@ -45,7 +45,7 @@ private:
     string _comment;
 
     /**
-     * Risk manager used internally.
+     * Risk manager.
      */
     RiskManager *_riskManager;
 
@@ -60,7 +60,7 @@ private:
     ulong _sellPositionTicket;
 
     /**
-     * Hash map of trades tickets (keys) and their type (values).
+     * List of trades tickets (keys) and their type (values).
      */
     ObjectList<CKeyValuePair<ulong, TradeTypeEnum>> *_tradesStore;
 
@@ -77,21 +77,16 @@ public:
         Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        RiskManagerParams &riskManagerParams,
+        RiskManager &riskManager,
         string className = "TradeManager")
         : _className(className),
           _logger(&logger),
           _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
-          _comment(tradeManagerParams.Comment)
+          _comment(tradeManagerParams.Comment),
+          _riskManager(&riskManager)
     {
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
-
-        // Interally used risk manager
-        _riskManager = new RiskManager(
-            &logger,
-            &contextParams,
-            &riskManagerParams);
 
         // Initialize trades stores
         _tradesStore = new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>();
@@ -143,9 +138,9 @@ public:
             {
                 // Info log
                 _logger.Log(
-                    ERROR,
+                    INFO,
                     _className,
-                    "Stored trade not found, ticket: " + (string)tradeTicket);
+                    "Removing stored trade not found, ticket: " + (string)tradeTicket);
 
                 // Remove from store
                 _tradesStore.Remove(trade);
@@ -156,7 +151,7 @@ public:
             }
 
             // Check result
-            if (IsResultRetcode(TRADE_RETCODE_PLACED))
+            if (IsResultRetcode(TRADE_RETCODE_DONE))
             {
                 continue;
             }
@@ -275,7 +270,7 @@ public:
             if (PositionSelectByTicket(ticket))
             {
                 // Compare magic and symbol of position
-                if (PositionGetInteger(POSITION_MAGIC) == _magicNumber && PositionGetString(POSITION_SYMBOL) == _contextParams.Symbol)
+                if (PositionGetInteger(POSITION_MAGIC) == _magicNumber)
                 {
                     _market.PositionClose(ticket);
                 }
@@ -296,7 +291,7 @@ public:
             if (OrderSelect(ticket))
             {
                 // Compare order's magic and symbol
-                if (OrderGetInteger(ORDER_MAGIC) == _magicNumber && OrderGetString(ORDER_SYMBOL) == _contextParams.Symbol)
+                if (OrderGetInteger(ORDER_MAGIC) == _magicNumber)
                 {
                     _market.OrderDelete(ticket);
                 }

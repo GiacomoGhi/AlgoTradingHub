@@ -1,27 +1,23 @@
 #include "./SizeCalculationTypeEnum.mqh";
+#include "../../../Libraries/List/ObjectList.mqh";
 
 class RiskManagerParams
 {
 public:
+    /**
+     * Type of size calculation.
+     */
+    const SizeCalculationTypeEnum SizeCalculationType;
+
     /**
      * Value used to calculate lot size based on selected SizeCaluclationType.
      */
     const double SizeValueOrPercentage;
 
     /**
-     * Max allowd daily drowdown percentage.
+     * List of max allowed dowrdown (value) during the selected period (time frame)
      */
-    const double MaxDailyDrawDownPercentage;
-
-    /**
-     * Max overall allowed drowdown percentage.
-     */
-    const double MaxOverallDrawDown;
-
-    /**
-     * Type of size calculation.
-     */
-    const SizeCalculationTypeEnum SizeCalculationType;
+    ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *PeriodAllowedDrawdownStore;
 
     /**
      * Contructor by copy.
@@ -29,22 +25,19 @@ public:
     RiskManagerParams(RiskManagerParams &riskManagerParams)
     {
         RiskManagerParams(
+            riskManagerParams.SizeCalculationType,
             riskManagerParams.SizeValueOrPercentage,
-            riskManagerParams.MaxDailyDrawDownPercentage,
-            riskManagerParams.MaxOverallDrawDown,
-            riskManagerParams.SizeCalculationType);
+            riskManagerParams.PeriodAllowedDrawdownStore);
     };
 
     /**
      * Contructor.
      */
     RiskManagerParams(
+        SizeCalculationTypeEnum sizeCalculationType,
         double sizeValueOrPercentage,
-        double maxDailyDrawDownPercentage,
-        double maxOverallDrawDown,
-        SizeCalculationTypeEnum sizeCalculationType)
-        : SizeValueOrPercentage(sizeValueOrPercentage),
-          MaxDailyDrawDownPercentage(maxDailyDrawDownPercentage),
-          MaxOverallDrawDown(maxOverallDrawDown),
-          SizeCalculationType(sizeCalculationType) {};
+        ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore)
+        : SizeCalculationType(sizeCalculationType),
+          SizeValueOrPercentage(sizeValueOrPercentage),
+          PeriodAllowedDrawdownStore(&periodAllowedDrawdownStore) {};
 }

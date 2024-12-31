@@ -104,21 +104,21 @@ private:
         if (TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignal))
         {
             takeProfitPrice = _takeProfitLenght > 0
-                                  ? takeProfitPrice = currentAskPrice + (_takeProfitLenght * points)
+                                  ? currentAskPrice + (_takeProfitLenght * points)
                                   : 0;
 
-            stopLossPrice = _takeProfitLenght > 0
-                                ? takeProfitPrice = currentBidPrice - (_stopLossLenght * points)
+            stopLossPrice = _stopLossLenght > 0
+                                ? currentBidPrice - (_stopLossLenght * points)
                                 : 0;
         }
         else
         {
             takeProfitPrice = _takeProfitLenght > 0
-                                  ? takeProfitPrice = currentBidPrice - (_takeProfitLenght * points)
+                                  ? currentBidPrice - (_takeProfitLenght * points)
                                   : 0;
 
-            stopLossPrice = _takeProfitLenght > 0
-                                ? takeProfitPrice = currentAskPrice + (_stopLossLenght * points)
+            stopLossPrice = _stopLossLenght > 0
+                                ? currentAskPrice + (_stopLossLenght * points)
                                 : 0;
         }
 

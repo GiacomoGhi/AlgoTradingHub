@@ -47,4 +47,17 @@ public:
 
         this.Log(INFO, source, "Init completed!");
     }
+
+    /**
+     * Logs "Init completed" message.
+     */
+    void LogInitFailed(string source)
+    {
+        if (!_isLogginEnabled)
+        {
+            return;
+        }
+
+        this.Log(ERROR, source, "Init failed!");
+    }
 }

@@ -1,4 +1,5 @@
 #include <Generic\HashMap.mqh>;
+
 #include "./Models/SignalManagerParams.mqh";
 #include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
 #include "../../Shared/Logger/Logger.mqh";
@@ -64,7 +65,7 @@ public:
             return;
         }
 
-        string infoLogString = "Signals to execute: ";
+        // string infoLogString = "Signals to execute: ";
         for (int i = 0; i < ArraySize(signalsStoreArray); i++)
         {
             // Store signal as to execute if value in store is true.
@@ -76,16 +77,16 @@ public:
                 // Add signal to execute
                 signalsToExecute.Append(signal);
 
-                // Prepare info log string
-                infoLogString += EnumToString(signal);
-                if (i > 0)
-                {
-                    infoLogString += ", ";
-                }
+                // // Prepare info log string
+                // infoLogString += EnumToString(signal);
+                // if (i > 0)
+                // {
+                //     infoLogString += ", ";
+                // }
             }
         }
 
-        _logger.Log(INFO, _className, infoLogString);
+        // _logger.Log(INFO, _className, infoLogString);
 
         return;
     }

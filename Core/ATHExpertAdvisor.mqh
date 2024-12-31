@@ -3,6 +3,12 @@
 // TODO decontructors everywhere!!!!
 class ATHExpertAdvisor
 {
+public:
+    /**
+     * Flags to check after object init. Is false in case of invalid input params.
+     */
+    bool IsInitCompleted;
+
 private:
     /**
      * Name of the class.
@@ -15,17 +21,22 @@ private:
     Logger *_logger;
 
     /**
-     * Signal manager object.
+     * Risk manager.
+     */
+    RiskManager *_riskManager;
+
+    /**
+     * Signal manager.
      */
     SignalManager *_signalManager;
 
     /**
-     * Trade manager object.
+     * Trade manager.
      */
     TradeManager *_tradeManager;
 
     /**
-     * Trade levels object.
+     * Trade levels.
      */
     ITradeLevelsIndicator *_tradeLevelsIndicator;
 
@@ -50,12 +61,21 @@ public:
           _logger(&logger),
           _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
+        IsInitCompleted = true;
+
+        // Risk manager
+        _riskManager = new RiskManager(
+            &logger,
+            &contextParams,
+            &riskManagerParams);
+        IsInitCompleted &= _riskManager.IsInitCompleted;
+
         // Trade manager
         _tradeManager = new TradeManager(
             &logger,
             &contextParams,
             &tradeManagerParams,
-            &riskManagerParams);
+            _riskManager);
 
         // Signal manager
         _signalManager = new SignalManager(
@@ -73,6 +93,16 @@ public:
      */
     void OnTick()
     {
+        // Check drawdown limits
+        if (_riskManager.IsDrawdownLimitExceeded())
+        {
+            // Void every trade
+            _tradeManager.PositionCloseAll();
+            _tradeManager.OrderDeleteAll();
+
+            return;
+        }
+
         // Delete trades that failed to be deleted
         _tradeManager.CompleteTradeVoidance();
 

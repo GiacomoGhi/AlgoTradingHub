@@ -52,12 +52,6 @@ public:
 
             // Update signal validity
             isValidSignal &= IsMovingAvarageValidSignal(_signalsStoreArray[i].Value());
-
-            _logger.Log(
-                INFO,
-                _className,
-                EnumToString(signalType) + " is valid? " + (string)isValidSignal);
-
             signalsStore.TrySetValue(signalType, isValidSignal);
         }
     };
@@ -68,12 +62,6 @@ private:
      */
     bool IsMovingAvarageValidSignal(MovingAvarageSignalsEnum signalType)
     {
-
-        _logger.Log(
-            INFO,
-            _className,
-            "Validating using... " + EnumToString(signalType));
-
         switch (signalType)
         {
         case PRICE_CLOSE_ABOVE:
@@ -110,15 +98,7 @@ private:
      */
     bool IsCloseAboveSignal()
     {
-        double prevCandleClosePrice = MarketHelper::GetClosePrice(this._symbol);
-        double prevCandleIndicatorValue = this.GetIndicatorValue(1);
-
-        _logger.Log(
-            INFO,
-            _className,
-            "prevCandleClosePrice=" + (string)prevCandleClosePrice + "; prevCandleIndicatorValue=" + (string)prevCandleIndicatorValue);
-
-        return prevCandleClosePrice > prevCandleIndicatorValue;
+        return MarketHelper::GetClosePrice(this._symbol) > this.GetIndicatorValue(1);
     };
 
     /**

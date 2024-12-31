@@ -91,12 +91,22 @@ int OnInit()
         __base_system_0_magic_number,
         __base_system_0_name);
 
+    // Risk manager periods allowed drowdown store
+    ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *periodAllowedDrawdownStore = new ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>>();
+    periodAllowedDrawdownStore.Append(
+        new CKeyValuePair<ENUM_TIMEFRAMES, double>(
+            __risk_manager_0_drawdown_limit_period_0,
+            __risk_manager_0_drawdown_limit_percent_0));
+    periodAllowedDrawdownStore.Append(
+        new CKeyValuePair<ENUM_TIMEFRAMES, double>(
+            __risk_manager_0_drawdown_limit_period_1,
+            __risk_manager_0_drawdown_limit_percent_1));
+
     // Risk manager params
     RiskManagerParams *riskManagerParams = new RiskManagerParams(
+        __risk_manager_0_size_calculation_type,
         __risk_manager_0_size_value_or_balance_percentage,
-        __risk_manager_0_max_daily_draw_down_percentage,
-        __risk_manager_0_max_overall_draw_down,
-        __risk_manager_0_size_calculation_type);
+        periodAllowedDrawdownStore);
 
     // Signal manager params
     SignalManagerParams *signalManagerParams = new SignalManagerParams(tradeSignalsList);
@@ -104,7 +114,7 @@ int OnInit()
     // Context params
     ContextParams *contextParams = new ContextParams(_Symbol);
 
-    // Fixed trade levels indicator
+    // Trade levels indicator
     FixedTradeLevels *fixedTradeLevels = new FixedTradeLevels(
         logger,
         contextParams,
@@ -122,6 +132,11 @@ int OnInit()
         riskManagerParams,
         signalManagerParams,
         fixedTradeLevels);
+
+    if (!TradingSystem.IsInitCompleted)
+    {
+        return (INIT_PARAMETERS_INCORRECT);
+    }
 
     return (INIT_SUCCEEDED);
 }
