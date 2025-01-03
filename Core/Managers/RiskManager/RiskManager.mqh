@@ -65,7 +65,7 @@ public:
           _contextParams(&contextParams),
           _params(&riskManagerParams),
           // Validate period allowed drawdown store
-          IsInitCompleted(this.ProcessPeriodAllowedDrawdownStore(riskManagerParams.PeriodAllowedDrawdownStore))
+          IsInitCompleted(this.InitPeriodAllowedDrawdownStore(riskManagerParams.PeriodAllowedDrawdownStore))
     {
         if (!IsInitCompleted)
         {
@@ -77,6 +77,18 @@ public:
         _symbolInfo.Name(contextParams.Symbol);
 
         _logger.LogInitCompleted(_className);
+    }
+
+    /**
+     * Deconstructor
+     */
+    ~RiskManager()
+    {
+        // Risk manager params
+        delete _params;
+
+        // Period allowed draw down store
+        delete _periodAllowedDrawdownStore;
     }
 
     /**
@@ -182,7 +194,7 @@ private:
     /**
      * Validate period drawdown input params to check that there is not the same timeframe twice
      */
-    bool ProcessPeriodAllowedDrawdownStore(ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore)
+    bool InitPeriodAllowedDrawdownStore(ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore)
     {
         // Initialize class property
         _periodAllowedDrawdownStore = new ObjectList<PeriodDrawdownItem>();
@@ -221,7 +233,10 @@ private:
                     currentTime));
         }
 
+        // Delete dtos
         delete periodsList;
+        delete &periodAllowedDrawdownStore;
+
         return true;
     };
 }

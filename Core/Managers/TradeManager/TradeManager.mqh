@@ -84,20 +84,34 @@ public:
           _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
           _comment(tradeManagerParams.Comment),
-          _riskManager(&riskManager)
+          _riskManager(&riskManager),
+          _tradesStore(new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>),
+          _tradesToVoidStore(new BasicList<ulong>)
     {
+        // Set ea magic number
         _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
-
-        // Initialize trades stores
-        _tradesStore = new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>();
-        _tradesToVoidStore = new BasicList<ulong>();
 
         // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
 
+        // Delte dto
+        delete &tradeManagerParams;
+
         _logger.LogInitCompleted(_className);
     };
+
+    /**
+     * Deconstructor
+     */
+    ~TradeManager()
+    {
+        // Trades store
+        delete _tradesStore;
+
+        // Trades to void store;
+        delete _tradesToVoidStore;
+    }
 
     /**
      * Close or delete singals only,

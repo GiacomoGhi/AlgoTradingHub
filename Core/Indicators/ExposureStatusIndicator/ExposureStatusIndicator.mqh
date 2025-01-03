@@ -32,6 +32,14 @@ public:
     }
 
     /**
+     * Deconstructor
+     */
+    ~ExposureStatusIndicator()
+    {
+        this.BaseIndicatorDeconstructor();
+    }
+
+    /**
      * Base class ITradeSignalProvider implementation
      */
     void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override

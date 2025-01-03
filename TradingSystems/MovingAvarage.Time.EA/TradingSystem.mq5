@@ -143,6 +143,7 @@ int OnInit()
 
 void OnDeinit(const int reason)
 {
+    delete TradingSystem;
 }
 
 void OnTick()

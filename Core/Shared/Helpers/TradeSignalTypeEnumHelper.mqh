@@ -8,24 +8,6 @@ class TradeSignalTypeEnumHelper
 {
 public:
     /**
-     * Gets all enumerator values that
-     * rappresents an open signal.
-     */
-    static BasicList<int> *GetOpenTypesValues()
-    {
-        BasicList<int> *list = new BasicList<int>();
-
-        list.Append((int)TradeSignalTypeEnum::OPEN_BUY_MARKET);
-        list.Append((int)TradeSignalTypeEnum::OPEN_BUY_LIMIT_ORDER);
-        list.Append((int)TradeSignalTypeEnum::OPEN_BUY_STOP_ORDER);
-        list.Append((int)TradeSignalTypeEnum::OPEN_SELL_MARKET);
-        list.Append((int)TradeSignalTypeEnum::OPEN_SELL_LIMIT_ORDER);
-        list.Append((int)TradeSignalTypeEnum::OPEN_SELL_STOP_ORDER);
-
-        return list;
-    }
-
-    /**
      * Returns true if signal type is of type: OPEN_* .
      * */
     static bool IsOpenType(TradeSignalTypeEnum signalType)

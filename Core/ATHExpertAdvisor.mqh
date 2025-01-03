@@ -21,6 +21,11 @@ private:
     Logger *_logger;
 
     /**
+     * Context params.
+     */
+    ContextParams *_contextParams;
+
+    /**
      * Risk manager.
      */
     RiskManager *_riskManager;
@@ -43,7 +48,7 @@ private:
     /**
      * Signals to execute list.
      */
-    BasicList<TradeSignalTypeEnum> _signalsToExecute;
+    BasicList<TradeSignalTypeEnum> *_signalsToExecute;
 
 public:
     /**
@@ -59,6 +64,7 @@ public:
         string className = "ATHExpertAdvisor")
         : _className(className),
           _logger(&logger),
+          _contextParams(&contextParams),
           _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
         IsInitCompleted = true;
@@ -89,6 +95,33 @@ public:
     };
 
     /**
+     * Deconstructor
+     */
+    ~ATHExpertAdvisor()
+    {
+        // Risk manager
+        delete _riskManager;
+
+        // Trade manager
+        delete _tradeManager;
+
+        // Signal manager
+        delete _signalManager;
+
+        // Trade levels indicator
+        delete _tradeLevelsIndicator;
+
+        // signals to execute list
+        delete _signalsToExecute;
+
+        // Context params
+        delete _contextParams;
+
+        // Logger
+        delete _logger;
+    }
+
+    /**
      * ATH EA OnTick implementation.
      */
     void OnTick()
@@ -107,7 +140,7 @@ public:
         _tradeManager.CompleteTradeVoidance();
 
         // Gets signals that needs to be executed
-        _signalManager.GetSignalsToExecute(&_signalsToExecute);
+        _signalManager.GetSignalsToExecute(_signalsToExecute);
 
         if (_signalsToExecute.Count() == 0)
         {
@@ -166,12 +199,19 @@ public:
         // Execute open trades signals
         for (int i = 0; i < _signalsToExecute.Count(); i++)
         {
-            // Execute signal
+            // Get trade signal
             TradeSignalTypeEnum tradeSignal = _signalsToExecute.Get(i);
+
+            // Get trade levels
+            TradeLevels *tradeLevels = _tradeLevelsIndicator
+                                           .GetTradeLevels(tradeSignal);
+
+            // Execute signal
             _tradeManager.Execute(
                 tradeSignal,
-                _tradeLevelsIndicator
-                    .GetTradeLevels(tradeSignal));
+                tradeLevels);
+
+            delete tradeLevels;
         }
     }
 }

@@ -34,6 +34,14 @@ public:
     }
 
     /**
+     * Deconstructor
+     */
+    ~MovingAvarage()
+    {
+        this.BaseIndicatorDeconstructor();
+    }
+
+    /**
      * Base class ITradeSignalProvider implementation
      */
     void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override

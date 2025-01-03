@@ -40,7 +40,22 @@ public:
           _tradeSignalProviders(signalManagerParams.TradeSignalProviders),
           _signalsStore(new CHashMap<TradeSignalTypeEnum, bool>)
     {
+        // Delte dto
+        delete &signalManagerParams;
+
         _logger.LogInitCompleted(_className);
+    }
+
+    /**
+     * Deconstructor
+     */
+    ~SignalManager()
+    {
+        // Trade signal providers
+        delete _tradeSignalProviders;
+
+        // Signals store
+        delete _signalsStore;
     }
 
     /**
@@ -84,9 +99,15 @@ public:
                 //     infoLogString += ", ";
                 // }
             }
+
+            // Delete dto
+            delete signalsStoreArray[i];
         }
 
         // _logger.Log(INFO, _className, infoLogString);
+
+        // Free array
+        ArrayFree(signalsStoreArray);
 
         return;
     }

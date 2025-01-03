@@ -65,7 +65,23 @@ public:
         // Store signal types and related triggers as array to allow looping.
         signalTypeTriggerStore.CopyTo(_signalsStoreArray);
         _signalsStoreArraySize = ArraySize(_signalsStoreArray);
+
+        // Delete dto
+        delete &signalTypeTriggerStore;
     };
+
+    /**
+     * Deconstructor
+     */
+    void BaseIndicatorDeconstructor()
+    {
+        // Signals store
+        for (int i = 0; i < ArraySize(_signalsStoreArray); i++)
+        {
+            delete _signalsStoreArray[i];
+        }
+        ArrayFree(_signalsStoreArray);
+    }
 
 protected:
     // Get a signle value of the indicator
