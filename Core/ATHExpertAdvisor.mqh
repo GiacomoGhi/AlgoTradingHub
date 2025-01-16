@@ -1,6 +1,5 @@
 #include "./index.mqh";
 
-// TODO decontructors everywhere!!!!
 class ATHExpertAdvisor
 {
 public:
