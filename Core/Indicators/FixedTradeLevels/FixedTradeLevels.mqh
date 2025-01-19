@@ -8,11 +8,6 @@ class FixedTradeLevels : public ITradeLevelsIndicator
 {
 private:
     /**
-     * Name of the class.
-     */
-    const string _className;
-
-    /**
      * Logger
      */
     Logger *_logger;
@@ -58,10 +53,8 @@ public:
         int stopLossLenght = 0,
         int orderDistanceFromCurrentPrice = 0,
         ENUM_ORDER_TYPE_TIME orderTypeTime = ORDER_TIME_GTC,
-        int orderExpirationHour = -1,
-        string className = "FixedTradeLevels")
-        : _className(className),
-          _logger(&logger),
+        int orderExpirationHour = -1)
+        : _logger(&logger),
           _contextParams(&contextParams),
           _takeProfitLenght(takeProfitLenght),
           _stopLossLenght(stopLossLenght),
@@ -69,7 +62,7 @@ public:
           _orderTypeTime(orderTypeTime),
           _orderExpirationHour(orderExpirationHour)
     {
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     };
 
     /**

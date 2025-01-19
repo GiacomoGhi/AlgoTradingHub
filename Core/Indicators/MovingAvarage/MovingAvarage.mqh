@@ -15,10 +15,8 @@ public:
         int period,
         int shift,
         ENUM_MA_METHOD method,
-        ENUM_APPLIED_PRICE appliedPrice,
-        string className = "MovingAvarage")
+        ENUM_APPLIED_PRICE appliedPrice)
         : BaseIndicator(
-              className,
               &logger,
               symbol,
               signalTypeTriggerStore,
@@ -30,7 +28,7 @@ public:
                   method,
                   appliedPrice))
     {
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     }
 
     /**

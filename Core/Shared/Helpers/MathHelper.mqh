@@ -14,14 +14,9 @@ public:
     {
         if (divisor == 0)
         {
-            logger.Log(ERROR, getClassName(), "Cannot divide by zero");
+            logger.Log(ERROR, __FUNCTION__, "Cannot divide by zero");
             return 0;
         }
         return dividend / divisor;
-    }
-
-    static string getClassName()
-    {
-        return "MathHelper";
     }
 }

@@ -35,15 +35,14 @@ public:
         int openTradeHour,
         int closeTradeHour,
         int rangeStartHour = 0,
-        int rangeStopHour = 0,
-        string className = "TimeIndicator")
+        int rangeStopHour = 0)
         : _openTradeHour(openTradeHour),
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
-          BaseIndicator(className, &logger, symbol, signalTypeTriggerStore)
+          BaseIndicator(&logger, symbol, signalTypeTriggerStore)
     {
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     }
 
     /**

@@ -9,11 +9,6 @@ class BaseIndicator : public ITradeSignalProvider
 {
 protected:
     /**
-     * Name of the child class.
-     */
-    const string _className;
-
-    /**
      * Logger.
      */
     Logger *_logger;
@@ -50,14 +45,12 @@ public:
      * Constructor
      */
     BaseIndicator(
-        string className,
         Logger &logger,
         string symbol,
         CHashMap<TradeSignalTypeEnum, TSignalsTypeEnum> &signalTypeTriggerStore,
         ENUM_TIMEFRAMES timeFrame = PERIOD_H1,
         int handle = 0)
-        : _className(className),
-          _logger(&logger),
+        : _logger(&logger),
           _symbol(symbol),
           _timeFrame(timeFrame),
           _handle(handle)
@@ -89,7 +82,7 @@ protected:
     {
         if (_handle <= 0)
         {
-            // TODO log error
+            _logger.Log(ERROR, __FUNCTION__, "Invalid or null indicator handle");
             return 0;
         }
         double valueContainer[1];

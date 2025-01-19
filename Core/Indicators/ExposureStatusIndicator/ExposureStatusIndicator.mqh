@@ -22,13 +22,12 @@ public:
         Logger &logger,
         string symbol,
         ulong magicNumber,
-        CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum> &signalTypeTriggerStore,
-        string className = "ExposureStatusIndicator")
+        CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum> &signalTypeTriggerStore)
         : _magicNumber(magicNumber),
           _storedTicket(0),
-          BaseIndicator(className, &logger, symbol, signalTypeTriggerStore)
+          BaseIndicator(&logger, symbol, signalTypeTriggerStore)
     {
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     }
 
     /**

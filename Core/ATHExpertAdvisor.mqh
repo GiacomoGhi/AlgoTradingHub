@@ -10,11 +10,6 @@ public:
 
 private:
     /**
-     * Name of the class.
-     */
-    const string _className;
-
-    /**
      * Logger.
      */
     Logger *_logger;
@@ -59,10 +54,8 @@ public:
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
         SignalManagerParams &signalManagerParams,
-        ITradeLevelsIndicator &tradeLevelsIndicator,
-        string className = "ATHExpertAdvisor")
-        : _className(className),
-          _logger(&logger),
+        ITradeLevelsIndicator &tradeLevelsIndicator)
+        : _logger(&logger),
           _contextParams(&contextParams),
           _tradeLevelsIndicator(&tradeLevelsIndicator)
     {
@@ -90,7 +83,7 @@ public:
         // signals to execute list
         _signalsToExecute = new BasicList<TradeSignalTypeEnum>();
 
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     };
 
     /**

@@ -8,11 +8,6 @@ class SignalManager
 {
 private:
     /**
-     * Name of the class.
-     */
-    const string _className;
-
-    /**
      * Logger.
      */
     Logger *_logger;
@@ -33,17 +28,15 @@ public:
      */
     SignalManager(
         Logger &logger,
-        SignalManagerParams &signalManagerParams,
-        string className = "SignalManager")
-        : _className(className),
-          _logger(&logger),
+        SignalManagerParams &signalManagerParams)
+        : _logger(&logger),
           _tradeSignalProviders(signalManagerParams.TradeSignalProviders),
           _signalsStore(new CHashMap<TradeSignalTypeEnum, bool>)
     {
         // Delte dto
         delete &signalManagerParams;
 
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     }
 
     /**

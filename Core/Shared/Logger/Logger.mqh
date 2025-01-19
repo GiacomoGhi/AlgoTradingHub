@@ -27,7 +27,7 @@ public:
         }
 
         PrintFormat(
-            "[(%u) %s.%s] %s: %s",
+            "id: %u [%s] %s %s: %s",
             _magicNumber,
             _eaName,
             source,

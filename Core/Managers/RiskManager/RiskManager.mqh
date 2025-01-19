@@ -18,11 +18,6 @@ public:
 
 private:
     /**
-     * Name of the class.
-     */
-    const string _className;
-
-    /**
      * Logger.
      */
     Logger *_logger;
@@ -59,10 +54,8 @@ public:
     RiskManager(
         Logger &logger,
         ContextParams &contextParams,
-        RiskManagerParams &riskManagerParams,
-        string className = "RiskManager")
-        : _className(className),
-          _logger(&logger),
+        RiskManagerParams &riskManagerParams)
+        : _logger(&logger),
           _contextParams(&contextParams),
           _params(&riskManagerParams),
           // Validate period allowed drawdown store
@@ -70,14 +63,14 @@ public:
     {
         if (!IsInitCompleted)
         {
-            _logger.LogInitFailed(_className);
+            _logger.LogInitFailed(__FUNCTION__);
             return;
         }
 
         // Set symbol info symbol name
         _symbolInfo.Name(contextParams.Symbol);
 
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     }
 
     /**
@@ -107,7 +100,7 @@ public:
         const double stopSize = MathAbs(entryPrice - stopLossPrice);
         if (stopSize <= 0)
         {
-            _logger.Log(ERROR, _className, "Invalid stop size: " + DoubleToString(stopSize));
+            _logger.Log(ERROR, __FUNCTION__, "Invalid stop size: " + DoubleToString(stopSize));
             return 0;
         }
 
@@ -135,7 +128,7 @@ public:
 
             return NormalizeVolume(calculatedLots);
         }
-        _logger.Log(ERROR, _className, "OrderCalcProfit: " + (string)GetLastError());
+        _logger.Log(ERROR, __FUNCTION__, "OrderCalcProfit: " + (string)GetLastError());
         return 0;
     }
 
@@ -172,7 +165,7 @@ public:
                 {
                     result |= true;
                     periodDrawdownItem.IsLimitExceeded = true;
-                    _logger.Log(DEBUG, _className, "Limit exceeded, periodDrawdownItem: " + periodDrawdownItem.ToString());
+                    _logger.Log(DEBUG, __FUNCTION__, "Limit exceeded, periodDrawdownItem: " + periodDrawdownItem.ToString());
                 }
             }
 

@@ -15,11 +15,6 @@ class TradeManager
 {
 private:
     /**
-     * Name of the class.
-     */
-    const string _className;
-
-    /**
      * Logger.
      */
     Logger *_logger;
@@ -77,10 +72,8 @@ public:
         Logger &logger,
         ContextParams &contextParams,
         TradeManagerParams &tradeManagerParams,
-        RiskManager &riskManager,
-        string className = "TradeManager")
-        : _className(className),
-          _logger(&logger),
+        RiskManager &riskManager)
+        : _logger(&logger),
           _contextParams(&contextParams),
           _magicNumber(tradeManagerParams.MagicNumber),
           _comment(tradeManagerParams.Comment),
@@ -98,7 +91,7 @@ public:
         // Delte dto
         delete &tradeManagerParams;
 
-        _logger.LogInitCompleted(_className);
+        _logger.LogInitCompleted(__FUNCTION__);
     };
 
     /**
@@ -121,7 +114,7 @@ public:
     {
         if (TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            _logger.Log(ERROR, _className, "Unsupported signal type");
+            _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type");
             return;
         }
 
@@ -153,7 +146,7 @@ public:
                 // Info log
                 _logger.Log(
                     INFO,
-                    _className,
+                    __FUNCTION__,
                     "Removing stored trade not found, ticket: " + (string)tradeTicket);
 
                 // Remove from store
@@ -183,7 +176,7 @@ public:
         // Exit if signal is not an "open" type
         if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            _logger.Log(ERROR, _className, "Unsupported signal type");
+            _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type");
             return;
         }
         // If open at market type, execute it and then exit
@@ -201,7 +194,7 @@ public:
         // Exit if entry price is not set
         else if (tradeLevels.OrderEntryPrice <= 0)
         {
-            _logger.Log(ERROR, _className, "Invalid order price");
+            _logger.Log(ERROR, __FUNCTION__, "Invalid order price");
             return;
         }
 
@@ -246,7 +239,7 @@ public:
                 // Info log
                 _logger.Log(
                     ERROR,
-                    _className,
+                    __FUNCTION__,
                     "Stored trade not found, ticket: " + (string)tradeTicket);
 
                 // Remove from store
@@ -478,7 +471,7 @@ private:
             // Failure message
             _logger.Log(
                 ERROR,
-                _className,
+                __FUNCTION__,
                 "Action failed. Return code=" + (string)result + ". Code description: " + _market.ResultRetcodeDescription());
 
             // Exit
@@ -487,7 +480,7 @@ private:
 
         _logger.Log(
             INFO,
-            _className,
+            __FUNCTION__,
             "Action completed. Return code=" + (string)result + ". Code description: " + _market.ResultRetcodeDescription());
 
         return true;
@@ -552,28 +545,28 @@ private:
         // Check take profit
         if (MathAbs(entryPrice - takeProfit) < pointsAdjustedStopsLevel)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid take profit, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
+            _logger.Log(ERROR, __FUNCTION__, "Invalid take profit, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
             return false;
         }
 
         // Check stop loss
         if (MathAbs(entryPrice - stopLoss) < pointsAdjustedStopsLevel)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid stop loss, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
+            _logger.Log(ERROR, __FUNCTION__, "Invalid stop loss, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
             return false;
         }
 
         double upperLevel = isLong ? takeProfit : stopLoss;
-        if (upperLevel < entryPrice)
+        if (upperLevel != 0 && upperLevel < entryPrice)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid upper level, isLong? " + (string)isLong);
+            _logger.Log(ERROR, __FUNCTION__, "Invalid upper level, isLong? " + (string)isLong);
             return false;
         }
 
         double lowerLevel = isLong ? stopLoss : takeProfit;
-        if (lowerLevel > entryPrice)
+        if (lowerLevel != 0 && lowerLevel > entryPrice)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid lower level, isLong? " + (string)isLong);
+            _logger.Log(ERROR, __FUNCTION__, "Invalid lower level, isLong? " + (string)isLong);
             return false;
         }
 
@@ -619,14 +612,14 @@ private:
                 price,
                 margin))
         {
-            _logger.Log(ERROR, _className, "OrderCalcProfit: " + (string)GetLastError());
+            _logger.Log(ERROR, __FUNCTION__, "OrderCalcProfit: " + (string)GetLastError());
             return false;
         }
 
         // Check funds
         if (margin > free_margin)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + " Insufficient margin!");
+            _logger.Log(ERROR, __FUNCTION__, "Insufficient margin!");
             return false;
         }
         //--- checking successful
@@ -643,7 +636,7 @@ private:
         double minVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
         if (volume < minVolume)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + StringFormat(" Volume is less than the minimal allowed SYMBOL_VOLUME_MIN=%.2f", minVolume));
+            _logger.Log(ERROR, __FUNCTION__, StringFormat("Volume is less than the minimal allowed SYMBOL_VOLUME_MIN=%.2f", minVolume));
             return false;
         }
 
@@ -651,7 +644,7 @@ private:
         double maxVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
         if (volume > maxVolume)
         {
-            _logger.Log(ERROR, _className, __FUNCTION__ + StringFormat(" Volume is greater than the maximal allowed SYMBOL_VOLUME_MAX=%.2f", maxVolume));
+            _logger.Log(ERROR, __FUNCTION__, StringFormat("Volume is greater than the maximal allowed SYMBOL_VOLUME_MAX=%.2f", maxVolume));
             return false;
         }
 
@@ -681,7 +674,7 @@ private:
             return true;
         }
 
-        _logger.Log(ERROR, _className, __FUNCTION__ + " Would exceed maximal allowed SYMBOL_VOLUME_LIMIT=" + (string)maxVolume);
+        _logger.Log(ERROR, __FUNCTION__, "Would exceed maximal allowed SYMBOL_VOLUME_LIMIT=" + (string)maxVolume);
         return false;
     }
 
@@ -765,7 +758,7 @@ private:
                     // Info log
                     _logger.Log(
                         INFO,
-                        _className,
+                        __FUNCTION__,
                         "Found position with ticket: " + (string)ticket);
                 }
             }
@@ -799,7 +792,7 @@ private:
                     // Info log
                     _logger.Log(
                         INFO,
-                        _className,
+                        __FUNCTION__,
                         "Found order with ticket: " + (string)ticket);
                 }
             }
