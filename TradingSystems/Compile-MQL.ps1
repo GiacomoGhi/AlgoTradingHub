@@ -9,11 +9,11 @@ Param(
 if ($help) {
     Write-Host "Compile-TradingSystem.ps1" -ForegroundColor Cyan
     Write-Host "This script compiles a specified MQL5 trading system file, validates the result," `
-        + "and optionally moves the compiled file to a designated output folder." -ForegroundColor White
+        "and optionally moves the compiled file to a designated output folder." -ForegroundColor White
     Write-Host ""
     Write-Host "Parameters:" -ForegroundColor Cyan
     Write-Host "  -target [string]      Specify the trading system's name (e.g., 'Moving.Time.EA')." `
-        + " The script searches for the 'TradingSystem.mq5' file in the corresponding directory."
+        " The script searches for the 'TradingSystem.mq5' file in the corresponding directory."
     Write-Host "  -test                 Perform a test compilation without creating or copying the output file."
     Write-Host "  -help                 Display this help message and exit."
     Write-Host ""

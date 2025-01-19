@@ -91,20 +91,11 @@ public:
 
                 // Add signal to execute
                 signalsToExecute.Append(signal);
-
-                // // Prepare info log string
-                // infoLogString += EnumToString(signal);
-                // if (i > 0)
-                // {
-                //     infoLogString += ", ";
-                // }
             }
 
             // Delete dto
             delete signalsStoreArray[i];
         }
-
-        // _logger.Log(INFO, _className, infoLogString);
 
         // Free array
         ArrayFree(signalsStoreArray);

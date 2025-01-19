@@ -3,16 +3,16 @@
 class Logger
 {
 private:
-    const bool _isLogginEnabled;
+    const int _logLevel;
     const string _eaName;
     const ulong _magicNumber;
 
 public:
     Logger(
-        bool isLoggingEnabled,
+        LogTypeEnum logLevel,
         string eaName,
         ulong magicNumber)
-        : _isLogginEnabled(isLoggingEnabled),
+        : _logLevel((int)logLevel),
           _eaName(eaName),
           _magicNumber(magicNumber) {};
 
@@ -21,7 +21,7 @@ public:
      */
     void Log(LogTypeEnum logType, string source, string message)
     {
-        if (!_isLogginEnabled)
+        if ((int)logType > _logLevel)
         {
             return;
         }
@@ -40,7 +40,7 @@ public:
      */
     void LogInitCompleted(string source)
     {
-        if (!_isLogginEnabled)
+        if ((int)LogTypeEnum::INFO > _logLevel)
         {
             return;
         }
@@ -53,7 +53,7 @@ public:
      */
     void LogInitFailed(string source)
     {
-        if (!_isLogginEnabled)
+        if ((int)LogTypeEnum::ERROR > _logLevel)
         {
             return;
         }

@@ -72,4 +72,29 @@ public:
             return TradeTypeEnum::TRADE_TYPE_UNDEFINED;
         }
     }
+
+    static bool IsLong(TradeSignalTypeEnum source)
+    {
+        switch (source)
+        {
+        case TradeSignalTypeEnum::CLOSE_BUY_MARKET:
+        case TradeSignalTypeEnum::OPEN_BUY_MARKET:
+        case TradeSignalTypeEnum::DELETE_BUY_LIMIT_ORDER:
+        case TradeSignalTypeEnum::OPEN_BUY_LIMIT_ORDER:
+        case TradeSignalTypeEnum::DELETE_BUY_STOP_ORDER:
+        case TradeSignalTypeEnum::OPEN_BUY_STOP_ORDER:
+            return true;
+
+        case TradeSignalTypeEnum::CLOSE_SELL_MARKET:
+        case TradeSignalTypeEnum::OPEN_SELL_MARKET:
+        case TradeSignalTypeEnum::DELETE_SELL_LIMIT_ORDER:
+        case TradeSignalTypeEnum::OPEN_SELL_LIMIT_ORDER:
+        case TradeSignalTypeEnum::DELETE_SELL_STOP_ORDER:
+        case TradeSignalTypeEnum::OPEN_SELL_STOP_ORDER:
+            return false;
+
+        default:
+            return false;
+        }
+    }
 }

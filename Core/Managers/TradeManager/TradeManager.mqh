@@ -5,10 +5,10 @@
 #include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../../Shared/Helpers/MarketHelper.mqh";
-#include "../RiskManager/RiskManager.mqh"
+#include "../RiskManager/RiskManager.mqh";
 #include "./Models/TradeManagerParams.mqh";
 #include "./Models/TradeTypeEnumHelper.mqh";
-#include <Generic/HashMap.mqh>
+#include <Generic/HashMap.mqh>;
 #include <Trade/Trade.mqh>;
 
 class TradeManager
@@ -322,9 +322,6 @@ private:
         double takeProfit,
         double stopLoss)
     {
-        // TODO validate trade levels
-        // TODO see https://www.mql5.com/en/articles/2555 for all the check that an EA must do before being published to the market
-
         // Normalize prices
         takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
         stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
@@ -333,11 +330,16 @@ private:
         string symbol = _contextParams.Symbol;
         if (signalType == OPEN_BUY_MARKET)
         {
-            double askPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
+            const double askPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
+            const double volume = _riskManager.GetTradeVolume(askPrice, stopLoss);
+
+            if (!this.ValidateTrade(signalType, volume, askPrice, stopLoss, takeProfit))
+            {
+                return;
+            }
 
             _market.Buy(
-                _riskManager
-                    .GetTradeVolume(askPrice, stopLoss),
+                volume,
                 symbol,
                 askPrice,
                 stopLoss,
@@ -346,11 +348,16 @@ private:
         }
         else if (signalType == OPEN_SELL_MARKET)
         {
-            double bidPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
+            const double bidPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
+            const double volume = _riskManager.GetTradeVolume(bidPrice, stopLoss);
+
+            if (!this.ValidateTrade(signalType, volume, bidPrice, stopLoss, takeProfit))
+            {
+                return;
+            }
 
             _market.Sell(
-                _riskManager
-                    .GetTradeVolume(bidPrice, stopLoss),
+                volume,
                 symbol,
                 bidPrice,
                 stopLoss,
@@ -388,14 +395,19 @@ private:
         orderEntryPrice = NormalizeDouble(orderEntryPrice, _contextParams.Digits);
 
         // Get trade volume
-        double tradeVolume = _riskManager.GetTradeVolume(orderEntryPrice, stopLoss);
+        const double volume = _riskManager.GetTradeVolume(orderEntryPrice, stopLoss);
+
+        if (!this.ValidateTrade(signalType, volume, orderEntryPrice, stopLoss, takeProfit))
+        {
+            return;
+        }
 
         // Place order
         string symbol = _contextParams.Symbol;
         if (signalType == OPEN_BUY_LIMIT_ORDER)
         {
             _market.BuyLimit(
-                tradeVolume,
+                volume,
                 orderEntryPrice,
                 symbol,
                 stopLoss,
@@ -407,7 +419,7 @@ private:
         else if (signalType == OPEN_BUY_STOP_ORDER)
         {
             _market.BuyStop(
-                tradeVolume,
+                volume,
                 orderEntryPrice,
                 symbol,
                 stopLoss,
@@ -419,7 +431,7 @@ private:
         else if (signalType == OPEN_SELL_LIMIT_ORDER)
         {
             _market.SellLimit(
-                tradeVolume,
+                volume,
                 orderEntryPrice,
                 symbol,
                 stopLoss,
@@ -431,7 +443,7 @@ private:
         else if (signalType == OPEN_SELL_STOP_ORDER)
         {
             _market.SellStop(
-                tradeVolume,
+                volume,
                 orderEntryPrice,
                 symbol,
                 stopLoss,
@@ -455,7 +467,7 @@ private:
     }
 
     /**
-     * Check trade request result with provided ret code
+     * Check trade request result with provided ret code.
      */
     bool IsResultRetcode(uint retcode)
     {
@@ -480,6 +492,251 @@ private:
 
         return true;
     };
+
+    /**
+     * Perform all needed checks before opening a trade operation.
+     */
+    bool ValidateTrade(TradeSignalTypeEnum signalType,
+                       double volume,
+                       double price,
+                       double stopLoss,
+                       double takeProfit)
+    {
+        bool isLong = TradeTypeEnumHelper::IsLong(signalType);
+
+        // Trade levels
+        if (!this.ValidateTradeLevels(isLong, price, stopLoss, takeProfit))
+        {
+            return false;
+        }
+
+        // Max pending orders
+        if (!TradeSignalTypeEnumHelper::IsMarketType(signalType) && !this.ValidateNumberOfPendingOrders())
+        {
+            return false;
+        }
+
+        // Trade volume
+        if (!this.ValidateTradeVolume(volume))
+        {
+            return false;
+        }
+
+        // Account margin availability
+        if (!this.ValidateRequiredMargin(
+                isLong,
+                volume,
+                price,
+                stopLoss,
+                takeProfit))
+        {
+            return false;
+        }
+
+        // Symbol max allowed volume
+        if (!this.ValidateSymbolMaxExposure(isLong, volume))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate trade take profit, stopLoss and entry price levels.
+     */
+    bool ValidateTradeLevels(bool isLong, double entryPrice, double stopLoss, double takeProfit)
+    {
+        double pointsAdjustedStopsLevel = (int)SymbolInfoInteger(_contextParams.Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _contextParams.Points;
+
+        // Check take profit
+        if (MathAbs(entryPrice - takeProfit) < pointsAdjustedStopsLevel)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid take profit, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
+            return false;
+        }
+
+        // Check stop loss
+        if (MathAbs(entryPrice - stopLoss) < pointsAdjustedStopsLevel)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid stop loss, closer then allowed by SYMBOL_TRADE_STOPS_LEVEL");
+            return false;
+        }
+
+        double upperLevel = isLong ? takeProfit : stopLoss;
+        if (upperLevel < entryPrice)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid upper level, isLong? " + (string)isLong);
+            return false;
+        }
+
+        double lowerLevel = isLong ? stopLoss : takeProfit;
+        if (lowerLevel > entryPrice)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + " Invalid lower level, isLong? " + (string)isLong);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate account max number of allowed pending orders
+     */
+    bool ValidateNumberOfPendingOrders()
+    {
+        // Get the number of pending orders allowed on the account
+        int maxAllowedOrders = (int)AccountInfoInteger(ACCOUNT_LIMIT_ORDERS);
+
+        // No limitation, return true
+        if (maxAllowedOrders == 0)
+        {
+            return true;
+        }
+
+        int orders = OrdersTotal();
+        return (orders < maxAllowedOrders);
+    }
+
+    /**
+     * Validate account margin.
+     */
+    bool ValidateRequiredMargin(bool isLong,
+                                double volume,
+                                double price,
+                                double stopLoss,
+                                double takeProfit)
+    {
+        // Free margin
+        const double free_margin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+
+        // Calculate required margin
+        double margin;
+        if (!OrderCalcMargin(
+                isLong ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,
+                _contextParams.Symbol,
+                volume,
+                price,
+                margin))
+        {
+            _logger.Log(ERROR, _className, "OrderCalcProfit: " + (string)GetLastError());
+            return false;
+        }
+
+        // Check funds
+        if (margin > free_margin)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + " Insufficient margin!");
+            return false;
+        }
+        //--- checking successful
+        return true;
+    }
+
+    /**
+     * Validate trade volume.
+     */
+    bool ValidateTradeVolume(double volume)
+    {
+        // Minimal allowed volume for trade operations
+        string symbol = _contextParams.Symbol;
+        double minVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+        if (volume < minVolume)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + StringFormat(" Volume is less than the minimal allowed SYMBOL_VOLUME_MIN=%.2f", minVolume));
+            return false;
+        }
+
+        // Maximal allowed volume of trade operations
+        double maxVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+        if (volume > maxVolume)
+        {
+            _logger.Log(ERROR, _className, __FUNCTION__ + StringFormat(" Volume is greater than the maximal allowed SYMBOL_VOLUME_MAX=%.2f", maxVolume));
+            return false;
+        }
+
+        // NOTE: minimal step error is handled by risk manager that rounds
+        // trade volume to the closest multiple of symbol volume step
+        return true;
+    }
+
+    /**
+     * Validate symbol max allowed volume
+     */
+    bool ValidateSymbolMaxExposure(bool isLong, double newTradeVolume)
+    {
+        // Get the limitation on the volume by a symbol
+        double maxVolume = SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_LIMIT);
+
+        // No limitation, return true
+        if (maxVolume == 0)
+        {
+            return true;
+        }
+
+        double currentTotalVolume = this.GetSymbolVolumeExposureByDirection(isLong);
+
+        if (maxVolume - (currentTotalVolume + newTradeVolume) > 0)
+        {
+            return true;
+        }
+
+        _logger.Log(ERROR, _className, __FUNCTION__ + " Would exceed maximal allowed SYMBOL_VOLUME_LIMIT=" + (string)maxVolume);
+        return false;
+    }
+
+    /**
+     * Find all positions with matching magic number and symbol.
+     */
+    double GetSymbolVolumeExposureByDirection(bool isLong)
+    {
+        double totalVolume = 0;
+
+        // For all open positions
+        for (int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+            // Select current position
+            ulong ticket = PositionGetTicket(i);
+            if (PositionSelectByTicket(ticket))
+            {
+                // Compare symbol of position
+                if (PositionGetString(POSITION_SYMBOL) == _contextParams.Symbol)
+                {
+                    // Get position type
+                    ENUM_POSITION_TYPE positionType = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
+
+                    ENUM_POSITION_TYPE selectedType = isLong ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
+                    if (positionType == selectedType)
+                    {
+                        totalVolume += PositionGetDouble(POSITION_VOLUME);
+                    }
+                }
+            }
+        }
+
+        // For all placed orders
+        for (int i = 0; i < OrdersTotal(); i++)
+        {
+            // Select order
+            ulong ticket = OrderGetTicket(i);
+            if (OrderSelect(ticket))
+            {
+                // Compare symbol
+                if (OrderGetString(ORDER_SYMBOL) == _contextParams.Symbol)
+                {
+                    // Get type
+                    ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)(OrderGetInteger(ORDER_TYPE));
+
+                    if ((isLong && (orderType == ORDER_TYPE_BUY_LIMIT || orderType == ORDER_TYPE_BUY_STOP)) || (!isLong && (orderType == ORDER_TYPE_SELL_LIMIT || orderType == ORDER_TYPE_SELL_STOP)))
+                    {
+                        totalVolume += PositionGetDouble(POSITION_VOLUME);
+                    }
+                }
+            }
+        }
+
+        return totalVolume;
+    }
 
     /**
      * Find all positions with matching magic number and symbol

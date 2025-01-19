@@ -13,9 +13,9 @@
 #include "../../Core/ATHExpertAdvisor.mqh";
 
 // Include input params global variables files
-#include "./Params/BaseSystemParams.0.mqh";
-#include "./Params/RiskParams.0.mqh";
-#include "./Params/TradeLevelsParams.0.mqh";
+#include "./Params/BaseSystemParams.mqh";
+#include "./Params/RiskParams.mqh";
+#include "./Params/TradeLevelsParams.mqh";
 #include "./Params/ExposureStatusIndicator.0.mqh";
 #include "./Params/MovingAvarageParams.0.mqh";
 #include "./Params/TimeIndicatorParams.0.mqh";
@@ -27,9 +27,9 @@ int OnInit()
 {
     // Logger
     Logger *logger = new Logger(
-        __base_system_0_allow_logging,
-        __base_system_0_name,
-        __base_system_0_magic_number);
+        __base_system_log_level,
+        __base_system_name,
+        __base_system_magic_number);
 
     // Trade signal list
     ObjectList<ITradeSignalProvider> *tradeSignalsList = new ObjectList<ITradeSignalProvider>();
@@ -45,7 +45,7 @@ int OnInit()
         new ExposureStatusIndicator(
             logger,
             _Symbol,
-            __base_system_0_magic_number,
+            __base_system_magic_number,
             exposureStatusIndicatorSignalTypeTriggerStore));
 
     // Moving avarage singals type and trigger associations
@@ -88,24 +88,24 @@ int OnInit()
 
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(
-        __base_system_0_magic_number,
-        __base_system_0_name);
+        __base_system_magic_number,
+        __base_system_name);
 
     // Risk manager periods allowed drowdown store
     ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *periodAllowedDrawdownStore = new ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>>();
     periodAllowedDrawdownStore.Append(
         new CKeyValuePair<ENUM_TIMEFRAMES, double>(
-            __risk_manager_0_drawdown_limit_period_0,
-            __risk_manager_0_drawdown_limit_percent_0));
+            __risk_manager_drawdown_limit_period_0,
+            __risk_manager_drawdown_limit_percent_0));
     periodAllowedDrawdownStore.Append(
         new CKeyValuePair<ENUM_TIMEFRAMES, double>(
-            __risk_manager_0_drawdown_limit_period_1,
-            __risk_manager_0_drawdown_limit_percent_1));
+            __risk_manager_drawdown_limit_period_1,
+            __risk_manager_drawdown_limit_percent_1));
 
     // Risk manager params
     RiskManagerParams *riskManagerParams = new RiskManagerParams(
-        __risk_manager_0_size_calculation_type,
-        __risk_manager_0_size_value_or_balance_percentage,
+        __risk_manager_size_calculation_type,
+        __risk_manager_size_value_or_balance_percentage,
         periodAllowedDrawdownStore);
 
     // Signal manager params

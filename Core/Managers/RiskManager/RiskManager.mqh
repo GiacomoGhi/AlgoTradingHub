@@ -4,6 +4,7 @@
 #include "../../Libraries/List/BasicList.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
 #include "../../Shared/Logger/Logger.mqh";
+#include "../../Shared/Helpers/MathHelper.mqh";
 #include "./Models/RiskManagerParams.mqh";
 #include "./Models/PeriodDrawdownItem.mqh";
 
@@ -99,7 +100,7 @@ public:
         // Fixed lot size
         if (_params.SizeCalculationType == FIXED_LOT_SIZE)
         {
-            return ValidateLotSize(_params.SizeValueOrPercentage);
+            return NormalizeVolume(_params.SizeValueOrPercentage);
         }
 
         // Validate stop size
@@ -126,9 +127,13 @@ public:
                                             : _accountInfo.Balance() * (_params.SizeValueOrPercentage / 100);
 
             // Calculate lots using calculated profit
-            const double calculatedLots = round(positionRisk * _symbolInfo.LotsMax() / (-calculatedProfit * _symbolInfo.LotsStep())) * _symbolInfo.LotsStep();
+            const double calculatedLots = round(MathHelper::SafeDivision(
+                                              _logger,
+                                              positionRisk * _symbolInfo.LotsMax(),
+                                              (-calculatedProfit * _symbolInfo.LotsStep()))) *
+                                          _symbolInfo.LotsStep();
 
-            return ValidateLotSize(calculatedLots);
+            return NormalizeVolume(calculatedLots);
         }
         _logger.Log(ERROR, _className, "OrderCalcProfit: " + (string)GetLastError());
         return 0;
@@ -158,7 +163,11 @@ public:
             if (!result)
             {
                 const double balanceAtPeriodStart = periodDrawdownItem.BalanceAtPeriodStart;
-                const double floatingPnL = ((currentEquity - balanceAtPeriodStart) / balanceAtPeriodStart) * 100;
+                const double floatingPnL = (MathHelper::SafeDivision(
+                                               _logger,
+                                               currentEquity - balanceAtPeriodStart,
+                                               balanceAtPeriodStart)) *
+                                           100;
                 if (floatingPnL <= (-1) * (periodDrawdownItem.MaxAllowedDrawdownPercent))
                 {
                     result |= true;
@@ -182,13 +191,15 @@ public:
 
 private:
     /**
-     * Validate lot size.
-     * If input size if less then symbol min lots then return min lots,
-     * viceversa with max lots.
+     * Normalize lot size.
+     * Round volume to the closest number that is a multiple of symbol volume step.
      */
-    double ValidateLotSize(double lotSize)
+    double NormalizeVolume(double volume)
     {
-        return fmin(fmax(lotSize, _symbolInfo.LotsMin()), _symbolInfo.LotsMax());
+        // Get symbol volume step
+        double volumeStep = SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_STEP);
+
+        return MathRound(MathHelper::SafeDivision(_logger, volume, volumeStep)) * volumeStep;
     }
 
     /**
