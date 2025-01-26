@@ -2,7 +2,6 @@
 #include "./Models/ContextParams.mqh";
 
 // Interfaces
-#include "./Interfaces/IExpertAdvisor.mqh";
 #include "./Interfaces/ITradeSignalProvider.mqh";
 #include "./Interfaces/ITradeLevelsIndicator.mqh";
 

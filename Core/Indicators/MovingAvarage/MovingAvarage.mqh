@@ -70,28 +70,28 @@ private:
     {
         switch (signalType)
         {
-        case PRICE_CLOSE_ABOVE:
+        case MovingAvarageSignalsEnum::PRICE_CLOSE_ABOVE:
             return IsCloseAboveSignal();
 
-        case PRICE_CLOSE_BELOW:
+        case MovingAvarageSignalsEnum::PRICE_CLOSE_BELOW:
             return IsCloseBelowSignal();
 
-        case PRICE_UPWARD_CROSS:
+        case MovingAvarageSignalsEnum::PRICE_UPWARD_CROSS:
             return IsPriceUpwardCrossSignal();
 
-        case PRICE_DOWNWARD_CROSS:
+        case MovingAvarageSignalsEnum::PRICE_DOWNWARD_CROSS:
             return IsPriceDownwardCrossSignal();
 
-        case UPWARD_DIRECTION:
+        case MovingAvarageSignalsEnum::UPWARD_DIRECTION:
             return IsUpwardDirectionSignal();
 
-        case DOWNWARD_DIRECTION:
+        case MovingAvarageSignalsEnum::DOWNWARD_DIRECTION:
             return IsDownwardDirectionSignal();
 
-        case UPWARD_TURNAROUND:
+        case MovingAvarageSignalsEnum::UPWARD_TURNAROUND:
             return IsUpwardTurnAroundSignal();
 
-        case DOWNWARD_TURNAROUND:
+        case MovingAvarageSignalsEnum::DOWNWARD_TURNAROUND:
             return IsDownwardTurnAroundSignal();
 
         default:
@@ -104,7 +104,7 @@ private:
      */
     bool IsCloseAboveSignal()
     {
-        return MarketHelper::GetClosePrice(this._symbol) > this.GetIndicatorValue(1);
+        return MarketHelper::GetClosePrice(_symbol, 1, _timeFrame) > this.GetIndicatorValue(1);
     };
 
     /**
@@ -112,15 +112,19 @@ private:
      */
     bool IsCloseBelowSignal()
     {
-        return MarketHelper::GetClosePrice(this._symbol) < this.GetIndicatorValue(_handle, 1);
+        return MarketHelper::GetClosePrice(_symbol, 1, _timeFrame) < this.GetIndicatorValue(1);
     };
 
     /**
-     * Check if price previous close was below and price current close is below
+     * Check if, in the previous two closure the first one was below and
+     * the second was above the moving avarage
      */
     bool IsPriceUpwardCrossSignal()
     {
-        return false;
+        // Check close below of candle with shift of 2 from current one
+        return MarketHelper::GetClosePrice(_symbol, 2, _timeFrame) < this.GetIndicatorValue(2)
+               // Check close above candle with shift of 1 from current one
+               && MarketHelper::GetClosePrice(_symbol, 1, _timeFrame) > this.GetIndicatorValue(1);
     };
 
     /**
@@ -128,7 +132,10 @@ private:
      */
     bool IsPriceDownwardCrossSignal()
     {
-        return false;
+        // Check close above of candle with shift of 2 from current one
+        return MarketHelper::GetClosePrice(_symbol, 2, _timeFrame) > this.GetIndicatorValue(2)
+               // Check close below candle with shift of 1 from current one
+               && MarketHelper::GetClosePrice(_symbol, 1, _timeFrame) < this.GetIndicatorValue(1);
     };
 
     /**
@@ -136,7 +143,7 @@ private:
      */
     bool IsUpwardDirectionSignal()
     {
-        return false;
+        return this.GetIndicatorValue(2) < this.GetIndicatorValue(1);
     };
 
     /**
@@ -144,7 +151,7 @@ private:
      */
     bool IsDownwardDirectionSignal()
     {
-        return false;
+        return this.GetIndicatorValue(2) > this.GetIndicatorValue(1);
     };
 
     /**
@@ -152,7 +159,10 @@ private:
      */
     bool IsUpwardTurnAroundSignal()
     {
-        return false;
+        // Check that third previous close were above the second
+        return this.GetIndicatorValue(3) > this.GetIndicatorValue(2)
+               // Check last close is above the second
+               && this.GetIndicatorValue(1) > this.GetIndicatorValue(2);
     };
 
     /**
@@ -160,6 +170,9 @@ private:
      */
     bool IsDownwardTurnAroundSignal()
     {
-        return false;
+        // Check that third previous close were above the second
+        return this.GetIndicatorValue(3) < this.GetIndicatorValue(2)
+               // Check last close is above the second
+               && this.GetIndicatorValue(1) < this.GetIndicatorValue(2);
     };
 }

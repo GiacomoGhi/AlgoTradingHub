@@ -134,7 +134,11 @@ private:
 
             if (orderExpirationDateTimeStruct.hour >= _orderExpirationHour)
             {
-                // TODO log error
+                // Update expiration
+                orderExpirationDateTimeStruct.hour = _orderExpirationHour;
+
+                // Set expiration time shifted to next day
+                orderExpiration = StructToTime(orderExpirationDateTimeStruct) + 86400;
             }
             else
             {
