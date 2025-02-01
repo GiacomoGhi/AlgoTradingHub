@@ -1,4 +1,4 @@
-#include "../../../Core/Shared/Logger/LogTypeEnum.mqh";
+#include "./Shared/Logger/LogTypeEnum.mqh";
 
 // Base system parameters
 input string __base_system_info_field;                         // MAIN PARAMETERS

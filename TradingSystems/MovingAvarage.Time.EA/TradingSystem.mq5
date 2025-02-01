@@ -9,16 +9,19 @@
 #property version "1.00"
 
 // Include Algo Trading Hub components
-#include "../../Core/index.mqh";
 #include "../../Core/ATHExpertAdvisor.mqh";
+#include "../../Core/index.mqh";
 
-// Include input params global variables files
-#include "./Params/BaseSystemParams.mqh";
-#include "./Params/RiskParams.mqh";
-#include "./Params/TradeLevelsParams.mqh";
-#include "./Params/ExposureStatusIndicator.0.mqh";
-#include "./Params/MovingAvarageParams.0.mqh";
-#include "./Params/TimeIndicatorParams.0.mqh";
+// Include base system input params global variables files
+#include "../../Core/BaseSystemParams.mqh";
+#include "../../Core/Managers/RiskManager/Params/RiskParams.mqh";
+#include "./AdditionalParams/RiskParams.mqh";
+
+// Include indicators input params global variables files
+#include "../../Core/Indicators/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh";
+#include "../../Core/Indicators/FixedTradeLevels/Params/FixedTradeLevelsParams.mqh";
+#include "../../Core/Indicators/MovingAvarage/Params/MovingAvarageParams.0.mqh";
+#include "../../Core/Indicators/TimeIndicator/Params/TimeIndicatorParams.0.mqh";
 
 // ATH Expert advisor object
 ATHExpertAdvisor *TradingSystem;
@@ -35,24 +38,26 @@ int OnInit()
     ObjectList<ITradeSignalProvider> *tradeSignalsList = new ObjectList<ITradeSignalProvider>();
 
     // Exposure status indicator
-    CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum> *exposureStatusIndicatorSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>();
-    exposureStatusIndicatorSignalTypeTriggerStore.Add(
-        __exposure_status_indicator_0_signal_type_0,
-        __exposure_status_indicator_0_signal_trigger_0);
+    ObjectList<CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>> *exposureStatusIndicatorSignalTypeTriggerStore = new ObjectList<CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>>();
+    exposureStatusIndicatorSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>(
+            __exposure_status_indicator_0_signal_type_0,
+            __exposure_status_indicator_0_signal_trigger_0));
 
     // Add exposure status indicator to trade signals list
     tradeSignalsList.Append(
         new ExposureStatusIndicator(
             logger,
             _Symbol,
-            __base_system_magic_number,
-            exposureStatusIndicatorSignalTypeTriggerStore));
+            exposureStatusIndicatorSignalTypeTriggerStore,
+            __base_system_magic_number));
 
     // Moving avarage singals type and trigger associations
-    CHashMap<TradeSignalTypeEnum, MovingAvarageSignalsEnum> *movingAvarageSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, MovingAvarageSignalsEnum>();
-    movingAvarageSignalTypeTriggerStore.Add(
-        __moving_avarage_0_signal_type_0,
-        __moving_avarage_0_signal_trigger_0);
+    ObjectList<CKeyValuePair<TradeSignalTypeEnum, MovingAvarageSignalsEnum>> *movingAvarageSignalTypeTriggerStore = new ObjectList<CKeyValuePair<TradeSignalTypeEnum, MovingAvarageSignalsEnum>>();
+    movingAvarageSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, MovingAvarageSignalsEnum>(
+            __moving_avarage_0_signal_type_0,
+            __moving_avarage_0_signal_trigger_0));
 
     // Add moving avarage to trade signals list
     tradeSignalsList.Append(
@@ -67,13 +72,15 @@ int OnInit()
             __moving_avarage_0_applied_price));
 
     // Time indicator singals type and trigger associations
-    CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum> *timeIndicatorSignalTypeTriggerStore = new CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>();
-    timeIndicatorSignalTypeTriggerStore.Add(
-        __time_indicator_0_signal_type_0,
-        __time_indicator_0_signal_trigger_0);
-    timeIndicatorSignalTypeTriggerStore.Add(
-        __time_indicator_0_signal_type_1,
-        __time_indicator_0_signal_trigger_1);
+    ObjectList<CKeyValuePair<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>> *timeIndicatorSignalTypeTriggerStore = new ObjectList<CKeyValuePair<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>>();
+    timeIndicatorSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>(
+            __time_indicator_0_signal_type_0,
+            __time_indicator_0_signal_trigger_0));
+    timeIndicatorSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>(
+            __time_indicator_0_signal_type_1,
+            __time_indicator_0_signal_trigger_1));
 
     // Add time indicator to trade signals list
     tradeSignalsList.Append(
@@ -88,8 +95,10 @@ int OnInit()
 
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(
-        __base_system_magic_number,
-        __base_system_name);
+        __base_system_name,
+        // Should be named "trade_manager" but sice there is only this
+        // we leave it in risk manager params
+        __risk_manager_consume_all_calculated_lots);
 
     // Risk manager periods allowed drowdown store
     ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *periodAllowedDrawdownStore = new ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>>();
@@ -104,22 +113,28 @@ int OnInit()
 
     // Risk manager params
     RiskManagerParams *riskManagerParams = new RiskManagerParams(
-        __risk_manager_size_calculation_type,
-        __risk_manager_size_value_or_balance_percentage,
+        __risk_manager_size_calculation_type_long,
+        __risk_manager_size_value_or_balance_percentage_long,
+        __risk_manager_size_calculation_type_short,
+        __risk_manager_size_value_or_balance_percentage_short,
         periodAllowedDrawdownStore);
 
     // Signal manager params
     SignalManagerParams *signalManagerParams = new SignalManagerParams(tradeSignalsList);
 
     // Context params
-    ContextParams *contextParams = new ContextParams(_Symbol);
+    ContextParams *contextParams = new ContextParams(
+        _Symbol,
+        __base_system_magic_number);
 
     // Trade levels indicator
     FixedTradeLevels *fixedTradeLevels = new FixedTradeLevels(
         logger,
         contextParams,
-        __trade_levels_take_profit_length,
-        __trade_levels_stop_loss_length,
+        __trade_levels_take_profit_length_long,
+        __trade_levels_stop_loss_length_long,
+        __trade_levels_take_profit_length_short,
+        __trade_levels_stop_loss_length_short,
         __trade_levels_order_distance_from_price,
         __trade_levels_order_type_time,
         __trade_levels_order_expiration_hour);

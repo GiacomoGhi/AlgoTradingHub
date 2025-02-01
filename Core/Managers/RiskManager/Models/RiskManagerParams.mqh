@@ -1,18 +1,28 @@
-#include "./SizeCalculationTypeEnum.mqh";
 #include "../../../Libraries/List/ObjectList.mqh";
+#include "./SizeCalculationTypeEnum.mqh";
 
 class RiskManagerParams
 {
-public:
+  public:
     /**
-     * Type of size calculation.
+     * Long trades type of size calculation.
      */
-    const SizeCalculationTypeEnum SizeCalculationType;
+    const SizeCalculationTypeEnum SizeCalculationTypeLong;
 
     /**
-     * Value used to calculate lot size based on selected SizeCaluclationType.
+     * Long trades value used to calculate lot size based on selected SizeCaluclationType.
      */
-    const double SizeValueOrPercentage;
+    const double SizeValueOrPercentageLong;
+
+    /**
+     * Short trades type of size calculation.
+     */
+    const SizeCalculationTypeEnum SizeCalculationTypeShort;
+
+    /**
+     * Short trades value used to calculate lot size based on selected SizeCaluclationType.
+     */
+    const double SizeValueOrPercentageShort;
 
     /**
      * List of max allowed dowrdown (value) during the selected period (time frame)
@@ -25,8 +35,10 @@ public:
     RiskManagerParams(RiskManagerParams &riskManagerParams)
     {
         RiskManagerParams(
-            riskManagerParams.SizeCalculationType,
-            riskManagerParams.SizeValueOrPercentage,
+            riskManagerParams.SizeCalculationTypeLong,
+            riskManagerParams.SizeValueOrPercentageLong,
+            riskManagerParams.SizeCalculationTypeShort,
+            riskManagerParams.SizeValueOrPercentageShort,
             riskManagerParams.PeriodAllowedDrawdownStore);
     };
 
@@ -34,10 +46,14 @@ public:
      * Contructor.
      */
     RiskManagerParams(
-        SizeCalculationTypeEnum sizeCalculationType,
-        double sizeValueOrPercentage,
+        SizeCalculationTypeEnum sizeCalculationTypeLong,
+        double sizeValueOrPercentageLong,
+        SizeCalculationTypeEnum sizeCalculationTypeShort,
+        double sizeValueOrPercentageShort,
         ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore)
-        : SizeCalculationType(sizeCalculationType),
-          SizeValueOrPercentage(sizeValueOrPercentage),
+        : SizeCalculationTypeLong(sizeCalculationTypeLong),
+          SizeValueOrPercentageLong(sizeValueOrPercentageLong),
+          SizeCalculationTypeShort(sizeCalculationTypeShort),
+          SizeValueOrPercentageShort(sizeValueOrPercentageShort),
           PeriodAllowedDrawdownStore(&periodAllowedDrawdownStore) {};
 }

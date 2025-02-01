@@ -1,5 +1,5 @@
-#include "../../../Core/Shared/Enums/TradeSignalTypeEnum.mqh";
-#include "../../../Core/Indicators/MovingAvarage/Models/MovingAvarageSignalsEnum.mqh";
+#include "../../../Shared/Enums/TradeSignalTypeEnum.mqh";
+#include "../Models/MovingAvarageSignalsEnum.mqh";
 
 // Moving avarage indicator parameters
 sinput string ___moving_avarage_0_info_field_0;                                                                   // ************************************************************************

@@ -1,5 +1,5 @@
-#include "../../../Core/Shared/Enums/TradeSignalTypeEnum.mqh";
-#include "../../../Core/Indicators/TimeIndicator/Models/TimeIndicatorSignalsEnum.mqh";
+#include "../../../Shared/Enums/TradeSignalTypeEnum.mqh";
+#include "../Models/TimeIndicatorSignalsEnum.mqh";
 
 // Time indicator parameters
 sinput string ___time_indicator_0_info_field_0;                                                                            // ************************************************************************
