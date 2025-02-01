@@ -1,11 +1,5 @@
-// Moving avarage
-#include "./MovingAvarage/MovingAvarage.mqh";
-
-// Time indicator
-#include "./TimeIndicator/TimeIndicator.mqh";
-
-// Exposure status indicator
 #include "./ExposureStatusIndicator/ExposureStatusIndicator.mqh";
-
-// Fixed trade levels
 #include "./FixedTradeLevels/FixedTradeLevels.mqh";
+#include "./MovingAvarage/MovingAvarage.mqh";
+#include "./StaticRange/StaticRange.mqh";
+#include "./TimeIndicator/TimeIndicator.mqh";
