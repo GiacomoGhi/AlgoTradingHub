@@ -1,10 +1,10 @@
-#include "../../Libraries/List/ObjectList.mqh";
 #include "../../Libraries/List/BasicList.mqh";
+#include "../../Libraries/List/ObjectList.mqh";
+#include "../../Shared/Helpers/MarketHelper.mqh";
+#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
+#include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
 #include "../../Shared/Models/TradeLevels.mqh";
-#include "../../Shared/Logger/Logger.mqh";
-#include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
-#include "../../Shared/Helpers/MarketHelper.mqh";
 #include "../RiskManager/RiskManager.mqh";
 #include "./Models/TradeManagerParams.mqh";
 #include "./Models/TradeTypeEnumHelper.mqh";
@@ -13,7 +13,7 @@
 
 class TradeManager
 {
-private:
+  private:
     /**
      * Logger.
      */
@@ -40,6 +40,11 @@ private:
     string _comment;
 
     /**
+     * Allow full calculated lots consumption if true.
+     */
+    bool _consumeAllCalculatedLots;
+
+    /**
      * Risk manager.
      */
     RiskManager *_riskManager;
@@ -64,7 +69,7 @@ private:
      */
     BasicList<ulong> *_tradesToVoidStore;
 
-public:
+  public:
     /**
      * Constructor.
      */
@@ -75,14 +80,15 @@ public:
         RiskManager &riskManager)
         : _logger(&logger),
           _contextParams(&contextParams),
-          _magicNumber(tradeManagerParams.MagicNumber),
+          _magicNumber(contextParams.MagicNumber),
           _comment(tradeManagerParams.Comment),
+          _consumeAllCalculatedLots(tradeManagerParams.ConsumeAllCalculatedLots),
           _riskManager(&riskManager),
           _tradesStore(new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>),
           _tradesToVoidStore(new BasicList<ulong>)
     {
         // Set ea magic number
-        _market.SetExpertMagicNumber(tradeManagerParams.MagicNumber);
+        _market.SetExpertMagicNumber(contextParams.MagicNumber);
 
         // Check for old positions and orders
         RetriveOpenPositions();
@@ -104,6 +110,30 @@ public:
 
         // Trades to void store;
         delete _tradesToVoidStore;
+    }
+
+    /**
+     * Select lastest position with given magicNumber
+     */
+    static bool SelectLatestPosition(Logger &logger, ulong magicNumber)
+    {
+        // For all open positions
+        for (int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+            // Select current position
+            ulong ticket = PositionGetTicket(i);
+            if (PositionSelectByTicket(ticket))
+            {
+                // Compare magic and symbol of position
+                if (PositionGetInteger(POSITION_MAGIC) == magicNumber)
+                {
+                    logger.Log(DEBUG, __FUNCTION__, "Position ticket: " + (string)ticket);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -182,7 +212,6 @@ public:
         // If open at market type, execute it and then exit
         else if (TradeSignalTypeEnumHelper::IsOpenAtMarketType(signalType))
         {
-            // TODO validate trade levels
             // Execute market position
             this.ExecuteInternal(
                 signalType,
@@ -198,7 +227,6 @@ public:
             return;
         }
 
-        // TODO validate trade levels
         this.ExecuteInternal(
             signalType,
             tradeLevels.TakeProfit,
@@ -306,7 +334,7 @@ public:
         }
     }
 
-private:
+  private:
     /**
      * Open market position and check result code
      */
@@ -319,56 +347,82 @@ private:
         takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
         stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
 
-        // Send trade
         string symbol = _contextParams.Symbol;
+        double openPrice;
         if (signalType == OPEN_BUY_MARKET)
         {
-            const double askPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
-            const double volume = _riskManager.GetTradeVolume(askPrice, stopLoss);
-
-            if (!this.ValidateTrade(signalType, volume, askPrice, stopLoss, takeProfit))
-            {
-                return;
-            }
-
-            _market.Buy(
-                volume,
-                symbol,
-                askPrice,
-                stopLoss,
-                takeProfit,
-                _comment);
+            openPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
         }
         else if (signalType == OPEN_SELL_MARKET)
         {
-            const double bidPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
-            const double volume = _riskManager.GetTradeVolume(bidPrice, stopLoss);
-
-            if (!this.ValidateTrade(signalType, volume, bidPrice, stopLoss, takeProfit))
-            {
-                return;
-            }
-
-            _market.Sell(
-                volume,
-                symbol,
-                bidPrice,
-                stopLoss,
-                takeProfit,
-                _comment);
+            openPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
+        }
+        else
+        {
+            _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type: " + EnumToString(signalType));
+            return;
         }
 
-        // Check result
-        if (!IsResultRetcode(TRADE_RETCODE_DONE))
+        double volume = _riskManager.GetTradeVolume(signalType, openPrice, stopLoss);
+
+        if (!this.ValidateTrade(signalType, volume, openPrice, stopLoss, takeProfit))
         {
             return;
         }
 
-        // Store into trades tickets store
-        _tradesStore.Append(
-            new CKeyValuePair<ulong, TradeTypeEnum>(
-                _market.ResultDeal(),
-                TradeTypeEnumHelper::Map(signalType)));
+        const double maxAllowedLots = SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_MAX);
+
+        // Consume all required volume
+        while (volume > SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_MIN))
+        {
+            double volumeToOpen = volume > maxAllowedLots
+                                      ? maxAllowedLots
+                                      : volume;
+
+            _logger.Log(
+                DEBUG,
+                __FUNCTION__,
+                "Opening trade with voulme: " + (string)volumeToOpen + "/" + (string)volume);
+
+            // Send trade
+            if (signalType == OPEN_BUY_MARKET)
+            {
+                _market.Buy(
+                    volumeToOpen,
+                    symbol,
+                    openPrice,
+                    stopLoss,
+                    takeProfit,
+                    _comment);
+            }
+            else
+            {
+                _market.Sell(
+                    volumeToOpen,
+                    symbol,
+                    openPrice,
+                    stopLoss,
+                    takeProfit,
+                    _comment);
+            }
+
+            // Check result
+            if (!IsResultRetcode(TRADE_RETCODE_DONE))
+            {
+                _logger.Log(ERROR, __FUNCTION__, "Trade failed with error: " + (string)GetLastError());
+                return;
+            }
+
+            // Store into trades tickets store
+            _tradesStore.Append(
+                new CKeyValuePair<ulong, TradeTypeEnum>(
+                    _market.ResultDeal(),
+                    TradeTypeEnumHelper::Map(signalType)));
+
+            volume -= volumeToOpen;
+        }
+
+        _logger.Log(DEBUG, __FUNCTION__, "Return");
     }
 
     /**
@@ -388,75 +442,93 @@ private:
         orderEntryPrice = NormalizeDouble(orderEntryPrice, _contextParams.Digits);
 
         // Get trade volume
-        const double volume = _riskManager.GetTradeVolume(orderEntryPrice, stopLoss);
+        double volume = _riskManager.GetTradeVolume(signalType, orderEntryPrice, stopLoss);
 
         if (!this.ValidateTrade(signalType, volume, orderEntryPrice, stopLoss, takeProfit))
         {
             return;
         }
 
-        // Place order
+        const double maxAllowedLots = SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_MAX);
+
+        // Consume all required volume
         string symbol = _contextParams.Symbol;
-        if (signalType == OPEN_BUY_LIMIT_ORDER)
+        while (volume > SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN))
         {
-            _market.BuyLimit(
-                volume,
-                orderEntryPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                orderTypeTime,
-                orderExpiration,
-                _comment);
-        }
-        else if (signalType == OPEN_BUY_STOP_ORDER)
-        {
-            _market.BuyStop(
-                volume,
-                orderEntryPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                orderTypeTime,
-                orderExpiration,
-                _comment);
-        }
-        else if (signalType == OPEN_SELL_LIMIT_ORDER)
-        {
-            _market.SellLimit(
-                volume,
-                orderEntryPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                orderTypeTime,
-                orderExpiration,
-                _comment);
-        }
-        else if (signalType == OPEN_SELL_STOP_ORDER)
-        {
-            _market.SellStop(
-                volume,
-                orderEntryPrice,
-                symbol,
-                stopLoss,
-                takeProfit,
-                orderTypeTime,
-                orderExpiration,
-                _comment);
-        }
+            double volumeToOpen = volume > maxAllowedLots
+                                      ? maxAllowedLots
+                                      : volume;
 
-        // Check result
-        if (!IsResultRetcode(TRADE_RETCODE_PLACED))
-        {
-            return;
-        }
+            // Place order
+            if (signalType == OPEN_BUY_LIMIT_ORDER)
+            {
+                _market.BuyLimit(
+                    volumeToOpen,
+                    orderEntryPrice,
+                    symbol,
+                    stopLoss,
+                    takeProfit,
+                    orderTypeTime,
+                    orderExpiration,
+                    _comment);
+            }
+            else if (signalType == OPEN_BUY_STOP_ORDER)
+            {
+                _market.BuyStop(
+                    volumeToOpen,
+                    orderEntryPrice,
+                    symbol,
+                    stopLoss,
+                    takeProfit,
+                    orderTypeTime,
+                    orderExpiration,
+                    _comment);
+            }
+            else if (signalType == OPEN_SELL_LIMIT_ORDER)
+            {
+                _market.SellLimit(
+                    volumeToOpen,
+                    orderEntryPrice,
+                    symbol,
+                    stopLoss,
+                    takeProfit,
+                    orderTypeTime,
+                    orderExpiration,
+                    _comment);
+            }
+            else if (signalType == OPEN_SELL_STOP_ORDER)
+            {
+                _market.SellStop(
+                    volumeToOpen,
+                    orderEntryPrice,
+                    symbol,
+                    stopLoss,
+                    takeProfit,
+                    orderTypeTime,
+                    orderExpiration,
+                    _comment);
+            }
+            else
+            {
+                _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type: " + EnumToString(signalType));
+                return;
+            }
 
-        // Store into trades tickets store
-        _tradesStore.Append(
-            new CKeyValuePair<ulong, TradeTypeEnum>(
-                _market.ResultDeal(),
-                TradeTypeEnumHelper::Map(signalType)));
+            // Check result
+            if (!IsResultRetcode(TRADE_RETCODE_PLACED))
+            {
+                _logger.Log(ERROR, __FUNCTION__, "Trade failed with error: " + (string)GetLastError());
+                return;
+            }
+
+            // Store into trades tickets store
+            _tradesStore.Append(
+                new CKeyValuePair<ulong, TradeTypeEnum>(
+                    _market.ResultDeal(),
+                    TradeTypeEnumHelper::Map(signalType)));
+
+            volume -= volumeToOpen;
+        }
     }
 
     /**
@@ -504,7 +576,7 @@ private:
         }
 
         // Max pending orders
-        if (!TradeSignalTypeEnumHelper::IsMarketType(signalType) && !this.ValidateNumberOfPendingOrders())
+        if (!TradeSignalTypeEnumHelper::IsMarketType(signalType) && !this.ValidateNumberOfPendingOrders(volume))
         {
             return false;
         }
@@ -576,7 +648,7 @@ private:
     /**
      * Validate account max number of allowed pending orders
      */
-    bool ValidateNumberOfPendingOrders()
+    bool ValidateNumberOfPendingOrders(double volume)
     {
         // Get the number of pending orders allowed on the account
         int maxAllowedOrders = (int)AccountInfoInteger(ACCOUNT_LIMIT_ORDERS);
@@ -587,8 +659,14 @@ private:
             return true;
         }
 
-        int orders = OrdersTotal();
-        return (orders < maxAllowedOrders);
+        int currentOpenOrders = OrdersTotal();
+
+        double totalOdersToOpen = MathHelper::SafeDivision(
+            _logger,
+            volume,
+            SymbolInfoDouble(_contextParams.Symbol, SYMBOL_VOLUME_MAX));
+
+        return ((currentOpenOrders + totalOdersToOpen) < maxAllowedOrders);
     }
 
     /**
@@ -640,6 +718,12 @@ private:
             return false;
         }
 
+        // Exit if full lots consumption is allowed
+        if (_consumeAllCalculatedLots)
+        {
+            return true;
+        }
+
         // Maximal allowed volume of trade operations
         double maxVolume = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
         if (volume > maxVolume)
@@ -679,7 +763,8 @@ private:
     }
 
     /**
-     * Find all positions with matching magic number and symbol.
+     * Calculate total open volume exposure on the requested symbol
+     * for both positions and orders.
      */
     double GetSymbolVolumeExposureByDirection(bool isLong)
     {
