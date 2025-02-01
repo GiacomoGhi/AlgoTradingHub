@@ -2,10 +2,12 @@
 
 class MathHelper
 {
-private:
-    MathHelper() {}
+  private:
+    MathHelper()
+    {
+    }
 
-public:
+  public:
     /**
      * Safe division implementation to avoid critical error zero divide.
      * Returns zero if divisor is zero.

@@ -1,10 +1,12 @@
 ;
 class MarketHelper
 {
-private:
-    MarketHelper() {}
+  private:
+    MarketHelper()
+    {
+    }
 
-public:
+  public:
     /**
      * Get ask price
      */
