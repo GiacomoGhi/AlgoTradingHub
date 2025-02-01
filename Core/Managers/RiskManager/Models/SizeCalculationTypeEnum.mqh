@@ -14,4 +14,11 @@ enum SizeCalculationTypeEnum
      * Calculate lot size to risk the requested balance percentage.
      */
     BALANCE_PERCENTAGE,
+
+    /**
+     * Always match opposite direction volume of open trades.
+     * It is used to enter and edged state.
+     * Note that size value or percentage value will be ignored
+     */
+    MATCH_OPPOSITE_DIRECTION_VOLUME
 }

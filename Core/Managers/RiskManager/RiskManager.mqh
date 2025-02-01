@@ -2,21 +2,22 @@
 #include <Trade/SymbolInfo.mqh>
 
 #include "../../Libraries/List/BasicList.mqh";
-#include "../../Shared/Models/ContextParams.mqh";
-#include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Helpers/MathHelper.mqh";
-#include "./Models/RiskManagerParams.mqh";
+#include "../../Shared/Logger/Logger.mqh";
+#include "../../Shared/Models/ContextParams.mqh";
 #include "./Models/PeriodDrawdownItem.mqh";
+#include "./Models/RiskManagerParams.mqh";
+#include "./Models/SizeCalculationTypeEnum.mqh";
 
 class RiskManager
 {
-public:
+  public:
     /**
      * Flags to check after object init. Is false in case of invalid input params.
      */
     const bool IsInitCompleted;
 
-private:
+  private:
     /**
      * Logger.
      */
@@ -47,7 +48,7 @@ private:
      */
     ObjectList<PeriodDrawdownItem> *_periodAllowedDrawdownStore;
 
-public:
+  public:
     /**
      * Constructor
      */
@@ -88,12 +89,31 @@ public:
     /**
      * Calculate position size based on required risk percentage
      */
-    double GetTradeVolume(double entryPrice = 0, double stopLossPrice = 0)
+    double GetTradeVolume(
+        TradeSignalTypeEnum tradeSignalType,
+        double entryPrice = 0,
+        double stopLossPrice = 0)
     {
+        bool isLong = TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignalType);
+
+        const SizeCalculationTypeEnum sizeCalculationType = isLong
+                                                                ? _params.SizeCalculationTypeLong
+                                                                : _params.SizeCalculationTypeShort;
+
+        const double sizeValueOrPercentage = isLong
+                                                 ? _params.SizeValueOrPercentageLong
+                                                 : _params.SizeValueOrPercentageShort;
+
         // Fixed lot size
-        if (_params.SizeCalculationType == FIXED_LOT_SIZE)
+        if (sizeCalculationType == FIXED_LOT_SIZE)
         {
-            return NormalizeVolume(_params.SizeValueOrPercentage);
+            return NormalizeVolume(sizeValueOrPercentage);
+        }
+
+        // Match opposite direction trading volume
+        if (sizeCalculationType == MATCH_OPPOSITE_DIRECTION_VOLUME)
+        {
+            return NormalizeVolume(GetOppositeDirectionTotalVolume(isLong));
         }
 
         // Validate stop size
@@ -113,11 +133,11 @@ public:
                 stopLossPrice,
                 calculatedProfit))
         {
-            const double positionRisk = _params.SizeCalculationType == FIXED_MONEY_AMOUNT
+            const double positionRisk = sizeCalculationType == FIXED_MONEY_AMOUNT
                                             // Fixed money amount
-                                            ? _params.SizeValueOrPercentage
+                                            ? sizeValueOrPercentage
                                             // Balance percentage
-                                            : _accountInfo.Balance() * (_params.SizeValueOrPercentage / 100);
+                                            : _accountInfo.Balance() * (sizeValueOrPercentage / 100);
 
             // Calculate lots using calculated profit
             const double calculatedLots = round(MathHelper::SafeDivision(
@@ -182,7 +202,7 @@ public:
         return result;
     }
 
-private:
+  private:
     /**
      * Normalize lot size.
      * Round volume to the closest number that is a multiple of symbol volume step.
@@ -243,4 +263,39 @@ private:
 
         return true;
     };
+
+    /**
+     * Get total volume of open position in the opposite direction.
+     */
+    double GetOppositeDirectionTotalVolume(bool isLong)
+    {
+        double totalVolumeAmount = 0;
+
+        // For all open positions
+        for (int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+            // Select current position
+            ulong ticket = PositionGetTicket(i);
+            if (PositionSelectByTicket(ticket))
+            {
+                // Compare magic and symbol of position
+                if (PositionGetInteger(POSITION_MAGIC) == _contextParams.MagicNumber && PositionGetString(POSITION_SYMBOL) == _contextParams.Symbol)
+                {
+                    // Get position type
+                    ENUM_POSITION_TYPE positionType = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
+
+                    if (!isLong && POSITION_TYPE_BUY)
+                    {
+                        totalVolumeAmount += PositionGetDouble(POSITION_VOLUME);
+                    }
+                    else if (isLong && POSITION_TYPE_SELL)
+                    {
+                        totalVolumeAmount += PositionGetDouble(POSITION_VOLUME);
+                    }
+                }
+            }
+        }
+
+        return totalVolumeAmount;
+    }
 }

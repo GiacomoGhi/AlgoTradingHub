@@ -1,12 +1,12 @@
-#include "../../Shared/Interfaces/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Helpers/MarketHelper.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
-#include "../../Shared/Models/ContextParams.mqh";
+#include "../../Shared/Interfaces/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Logger/Logger.mqh";
+#include "../../Shared/Models/ContextParams.mqh";
 
 class FixedTradeLevels : public ITradeLevelsIndicator
 {
-private:
+  private:
     /**
      * Logger
      */
@@ -18,14 +18,24 @@ private:
     ContextParams *_contextParams;
 
     /**
-     * Take profit level distance from open price.
+     * Long trades take profit level distance from open price.
      */
-    int _takeProfitLenght;
+    int _longTradesTakeProfitLenght;
 
     /**
-     * Stop profit level distance from open price.
+     * Long trades stop profit level distance from open price.
      */
-    int _stopLossLenght;
+    int _longTradesStopLossLenght;
+
+    /**
+     * Short trades take profit level distance from open price.
+     */
+    int _shortTradesTakeProfitLenght;
+
+    /**
+     * Short trades stop profit level distance from open price.
+     */
+    int _shortTradesStopLossLenght;
 
     /**
      * Pending order distance from current price.
@@ -42,22 +52,26 @@ private:
      */
     int _orderExpirationHour;
 
-public:
+  public:
     /**
      * Constructor to initialize FixedTradeLevels with specific parameters.
      */
     FixedTradeLevels(
         Logger &logger,
         ContextParams &contextParams,
-        int takeProfitLenght = 0,
-        int stopLossLenght = 0,
+        int longTradesTakeProfitLenght = 0,
+        int longTradesStopLossLenght = 0,
+        int shortTradesTakeProfitLenght = 0,
+        int shortTradesStopLossLenght = 0,
         int orderDistanceFromCurrentPrice = 0,
         ENUM_ORDER_TYPE_TIME orderTypeTime = ORDER_TIME_GTC,
         int orderExpirationHour = -1)
         : _logger(&logger),
           _contextParams(&contextParams),
-          _takeProfitLenght(takeProfitLenght),
-          _stopLossLenght(stopLossLenght),
+          _longTradesTakeProfitLenght(longTradesTakeProfitLenght),
+          _longTradesStopLossLenght(longTradesStopLossLenght),
+          _shortTradesTakeProfitLenght(shortTradesTakeProfitLenght),
+          _shortTradesStopLossLenght(shortTradesStopLossLenght),
           _orderDistanceFromCurrentPrice(orderDistanceFromCurrentPrice),
           _orderTypeTime(orderTypeTime),
           _orderExpirationHour(orderExpirationHour)
@@ -80,7 +94,7 @@ public:
         }
     }
 
-private:
+  private:
     /**
      * Generates trade levels for a market order based on the trade signal..
      */
@@ -96,22 +110,22 @@ private:
         const double points = _contextParams.Points;
         if (TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignal))
         {
-            takeProfitPrice = _takeProfitLenght > 0
-                                  ? currentAskPrice + (_takeProfitLenght * points)
+            takeProfitPrice = _longTradesTakeProfitLenght > 0
+                                  ? currentAskPrice + (_longTradesTakeProfitLenght * points)
                                   : 0;
 
-            stopLossPrice = _stopLossLenght > 0
-                                ? currentBidPrice - (_stopLossLenght * points)
+            stopLossPrice = _longTradesStopLossLenght > 0
+                                ? currentBidPrice - (_longTradesStopLossLenght * points)
                                 : 0;
         }
         else
         {
-            takeProfitPrice = _takeProfitLenght > 0
-                                  ? currentBidPrice - (_takeProfitLenght * points)
+            takeProfitPrice = _shortTradesTakeProfitLenght > 0
+                                  ? currentBidPrice - (_shortTradesTakeProfitLenght * points)
                                   : 0;
 
-            stopLossPrice = _stopLossLenght > 0
-                                ? currentAskPrice + (_stopLossLenght * points)
+            stopLossPrice = _shortTradesStopLossLenght > 0
+                                ? currentAskPrice + (_shortTradesStopLossLenght * points)
                                 : 0;
         }
 
@@ -168,13 +182,13 @@ private:
                              : currentAskPrice + (_orderDistanceFromCurrentPrice * points);
 
             // Take profit
-            takeProfitPrice = _takeProfitLenght > 0
-                                  ? takeProfitPrice = orderPrice + (_takeProfitLenght * points)
+            takeProfitPrice = _longTradesTakeProfitLenght > 0
+                                  ? orderPrice + (_longTradesTakeProfitLenght * points)
                                   : 0;
 
             // Stop loss
-            stopLossPrice = _takeProfitLenght > 0
-                                ? takeProfitPrice = orderPrice - (_stopLossLenght * points)
+            stopLossPrice = _longTradesStopLossLenght > 0
+                                ? orderPrice - (_longTradesStopLossLenght * points)
                                 : 0;
         }
         else
@@ -185,13 +199,13 @@ private:
                              : currentBidPrice + (_orderDistanceFromCurrentPrice * points);
 
             // Take profit
-            takeProfitPrice = _takeProfitLenght > 0
-                                  ? takeProfitPrice = orderPrice - (_takeProfitLenght * points)
+            takeProfitPrice = _shortTradesTakeProfitLenght > 0
+                                  ? orderPrice - (_shortTradesTakeProfitLenght * points)
                                   : 0;
 
             // Stop loss
-            stopLossPrice = _takeProfitLenght > 0
-                                ? takeProfitPrice = orderPrice + (_stopLossLenght * points)
+            stopLossPrice = _shortTradesStopLossLenght > 0
+                                ? orderPrice + (_shortTradesStopLossLenght * points)
                                 : 0;
         }
 

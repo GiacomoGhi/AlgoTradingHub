@@ -1,12 +1,12 @@
 #include <Generic\HashMap.mqh>;
 
-#include "./Models/SignalManagerParams.mqh";
 #include "../../Shared/Enums/TradeSignalTypeEnum.mqh";
 #include "../../Shared/Logger/Logger.mqh";
+#include "./Models/SignalManagerParams.mqh";
 
 class SignalManager
 {
-private:
+  private:
     /**
      * Logger.
      */
@@ -22,7 +22,7 @@ private:
      */
     CHashMap<TradeSignalTypeEnum, bool> *_signalsStore;
 
-public:
+  public:
     /**
      * Constructor
      */
@@ -84,6 +84,7 @@ public:
 
                 // Add signal to execute
                 signalsToExecute.Append(signal);
+                _logger.Log(DEBUG, __FUNCTION__, "Added signal: " + EnumToString(signal));
             }
 
             // Delete dto
