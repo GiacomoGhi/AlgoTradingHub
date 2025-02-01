@@ -3,7 +3,7 @@
 
 class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSignalsEnum>
 {
-private:
+  private:
     /**
      * Expert advisor unique identifier.
      */
@@ -14,15 +14,15 @@ private:
      */
     ulong _storedTicket;
 
-public:
+  public:
     /**
      * Constructor
      */
     ExposureStatusIndicator(
         Logger &logger,
         string symbol,
-        ulong magicNumber,
-        CHashMap<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum> &signalTypeTriggerStore)
+        ObjectList<CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>> &signalTypeTriggerStore,
+        ulong magicNumber)
         : _magicNumber(magicNumber),
           _storedTicket(0),
           BaseIndicator(&logger, symbol, signalTypeTriggerStore)
@@ -43,10 +43,10 @@ public:
      */
     void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
     {
-        for (int i = 0; i < _signalsStoreArraySize; i++)
+        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
         {
             // Variable for readability
-            TradeSignalTypeEnum signalType = _signalsStoreArray[i].Key();
+            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
 
             // Add entry if missing
             bool isValidSignal = true;
@@ -56,12 +56,12 @@ public:
             }
 
             // Update signal validity
-            isValidSignal &= IsExposureStatusIndicatorValidSignal(_signalsStoreArray[i].Value());
+            isValidSignal &= IsExposureStatusIndicatorValidSignal(_signalTypeTriggerList[i].Value());
             signalsStore.TrySetValue(signalType, isValidSignal);
         }
     };
 
-private:
+  private:
     /**
      * Return signal method result given a signal type
      */
@@ -71,6 +71,12 @@ private:
         {
         case NOT_ANY_OPEN_POSITION:
             return !IsAnyPositionOpen();
+
+        case NOT_ANY_BUY_POSITIONS:
+            return !IsAnyPositionOpen(1);
+
+        case NOT_ANY_SELL_POSITIONS:
+            return !IsAnyPositionOpen(-1);
 
         case NOT_ANY_PLACED_ORDER:
             return !IsAnyOrderPlaced();
@@ -83,10 +89,10 @@ private:
     /**
      * Check for open positions by magic num, return true if one open position is found
      */
-    bool IsAnyPositionOpen()
+    bool IsAnyPositionOpen(int direction = 0)
     {
         // Check stored ticket first
-        if (PositionSelectByTicket(_storedTicket))
+        if (direction == 0 && PositionSelectByTicket(_storedTicket))
         {
             return true;
         }
@@ -101,8 +107,21 @@ private:
                 // Check with magic number
                 if (PositionGetInteger(POSITION_MAGIC) == _magicNumber)
                 {
-                    _storedTicket = ticket;
-                    return true;
+                    if (direction == 0)
+                    {
+                        _storedTicket = ticket;
+                        return true;
+                    }
+
+                    // Get position type
+                    ENUM_POSITION_TYPE positionType = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
+
+                    ENUM_POSITION_TYPE selectedType = direction == 1 ? POSITION_TYPE_BUY
+                                                                     : POSITION_TYPE_SELL;
+                    if (positionType == selectedType)
+                    {
+                        return true;
+                    }
                 }
             }
         }

@@ -3,7 +3,7 @@
 
 class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
 {
-private:
+  private:
     /**
      * Open trade hour.
      */
@@ -24,14 +24,14 @@ private:
      */
     int _rangeEndHour;
 
-public:
+  public:
     /**
      * Constructor
      */
     TimeIndicator(
         Logger &logger,
         string symbol,
-        CHashMap<TradeSignalTypeEnum, TimeIndicatorSignalsEnum> &signalTypeTriggerStore,
+        ObjectList<CKeyValuePair<TradeSignalTypeEnum, TimeIndicatorSignalsEnum>> &signalTypeTriggerStore,
         int openTradeHour,
         int closeTradeHour,
         int rangeStartHour = 0,
@@ -58,10 +58,10 @@ public:
      */
     void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
     {
-        for (int i = 0; i < _signalsStoreArraySize; i++)
+        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
         {
             // Variable for readability
-            TradeSignalTypeEnum signalType = _signalsStoreArray[i].Key();
+            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
 
             // Add entry if missing
             bool isValidSignal = true;
@@ -71,12 +71,12 @@ public:
             }
 
             // Update signal validity
-            isValidSignal &= IsTimeIndicatorValidSignal(_signalsStoreArray[i].Value());
+            isValidSignal &= IsTimeIndicatorValidSignal(_signalTypeTriggerList[i].Value());
             signalsStore.TrySetValue(signalType, isValidSignal);
         }
     };
 
-private:
+  private:
     /**
      * Return signal method result given a signal type
      */

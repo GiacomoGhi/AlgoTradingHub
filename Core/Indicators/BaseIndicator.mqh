@@ -1,13 +1,13 @@
-#include <Generic\HashMap.mqh>;
-#include "../Libraries/BinFlags/BinFlags.mqh";
+#include "../Libraries/List/ObjectList.mqh";
 #include "../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../Shared/Interfaces/ITradeSignalProvider.mqh";
 #include "../Shared/Logger/Logger.mqh";
+#include <Generic\HashMap.mqh>;
 
 template <typename TSignalsTypeEnum>
 class BaseIndicator : public ITradeSignalProvider
 {
-protected:
+  protected:
     /**
      * Logger.
      */
@@ -29,39 +29,27 @@ protected:
     ENUM_TIMEFRAMES _timeFrame;
 
     /**
-     * Int to indicate the size of the array of signals types produced from this indicator.
-     */
-    int _signalsStoreArraySize;
-
-    /**
      * Array of key value pairs,
      * Contians the trade signal type produced from the indicator and
      * indicator condition used to validate the signal.
      */
-    CKeyValuePair<TradeSignalTypeEnum, TSignalsTypeEnum> *_signalsStoreArray[];
+    ObjectList<CKeyValuePair<TradeSignalTypeEnum, TSignalsTypeEnum>> *_signalTypeTriggerList;
 
-public:
+  public:
     /**
      * Constructor
      */
     BaseIndicator(
         Logger &logger,
         string symbol,
-        CHashMap<TradeSignalTypeEnum, TSignalsTypeEnum> &signalTypeTriggerStore,
+        ObjectList<CKeyValuePair<TradeSignalTypeEnum, TSignalsTypeEnum>> &signalTypeTriggerList,
         ENUM_TIMEFRAMES timeFrame = PERIOD_H1,
         int handle = 0)
         : _logger(&logger),
           _symbol(symbol),
+          _signalTypeTriggerList(&signalTypeTriggerList),
           _timeFrame(timeFrame),
-          _handle(handle)
-    {
-        // Store signal types and related triggers as array to allow looping.
-        signalTypeTriggerStore.CopyTo(_signalsStoreArray);
-        _signalsStoreArraySize = ArraySize(_signalsStoreArray);
-
-        // Delete dto
-        delete &signalTypeTriggerStore;
-    };
+          _handle(handle) {};
 
     /**
      * Deconstructor
@@ -69,14 +57,11 @@ public:
     void BaseIndicatorDeconstructor()
     {
         // Signals store
-        for (int i = 0; i < ArraySize(_signalsStoreArray); i++)
-        {
-            delete _signalsStoreArray[i];
-        }
-        ArrayFree(_signalsStoreArray);
+        _signalTypeTriggerList.RemoveAll();
+        delete _signalTypeTriggerList;
     }
 
-protected:
+  protected:
     // Get a signle value of the indicator
     double GetIndicatorValue(int shift = 0, int bufferNumber = 0)
     {
