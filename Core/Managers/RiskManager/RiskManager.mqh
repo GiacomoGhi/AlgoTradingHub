@@ -116,6 +116,15 @@ class RiskManager
             return NormalizeVolume(GetOppositeDirectionTotalVolume(isLong));
         }
 
+        if (sizeCalculationType == ONE_LOT_EVERY)
+        {
+            return NormalizeVolume(
+                MathHelper::SafeDivision(
+                    _logger,
+                    _accountInfo.Balance(),
+                    sizeValueOrPercentage));
+        }
+
         // Validate stop size
         const double stopSize = MathAbs(entryPrice - stopLossPrice);
         if (stopSize <= 0)
@@ -226,7 +235,8 @@ class RiskManager
         // Early exit
         if (periodAllowedDrawdownStore.Count() == 0)
         {
-            return true;
+            delete &periodAllowedDrawdownStore;
+            return true; 
         }
 
         // Temporary list to store time frames
