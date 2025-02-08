@@ -4,13 +4,13 @@
 
 class StaticRange : public BaseIndicator<StaticRangeSignalsEnum>
 {
-  private:
+private:
     double _minPrice;
     double _maxPrice;
     ulong _magicNumber;
     double _positionsDeltaPoints;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -47,7 +47,6 @@ class StaticRange : public BaseIndicator<StaticRangeSignalsEnum>
      */
     void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
     {
-        _logger.Log(DEBUG, __FUNCTION__, "Signal store update");
         for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
         {
             // Variable for readability
@@ -66,7 +65,7 @@ class StaticRange : public BaseIndicator<StaticRangeSignalsEnum>
         }
     };
 
-  private:
+private:
     /**
      * Return signal method result given a signal type
      */

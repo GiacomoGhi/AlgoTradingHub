@@ -131,6 +131,9 @@ public:
         // Delete trades that failed to be deleted
         _tradeManager.CompleteTradeVoidance();
 
+        //  Update positions levels
+        _tradeManager.UpdatePositionLevels();
+
         // Gets signals that needs to be executed
         _signalManager.GetSignalsToExecute(_signalsToExecute);
 

@@ -13,11 +13,16 @@
 
 class TradeManager
 {
-  private:
+private:
     /**
      * Logger.
      */
     Logger *_logger;
+
+    /**
+     * Trade manager params.
+     */
+    TradeManagerParams *_tradeManagerParams;
 
     /**
      * Context params.
@@ -33,16 +38,6 @@ class TradeManager
      * Expert advisor unique identifier.
      */
     ulong _magicNumber;
-
-    /**
-     * String to use in trade comments.
-     */
-    string _comment;
-
-    /**
-     * Allow full calculated lots consumption if true.
-     */
-    bool _consumeAllCalculatedLots;
 
     /**
      * Risk manager.
@@ -69,7 +64,12 @@ class TradeManager
      */
     BasicList<ulong> *_tradesToVoidStore;
 
-  public:
+    /**
+     * Symbol trade freeze level
+     */
+    double _symbolTradeFreezeLevel;
+
+public:
     /**
      * Constructor.
      */
@@ -79,13 +79,14 @@ class TradeManager
         TradeManagerParams &tradeManagerParams,
         RiskManager &riskManager)
         : _logger(&logger),
+          _tradeManagerParams(&tradeManagerParams),
           _contextParams(&contextParams),
           _magicNumber(contextParams.MagicNumber),
-          _comment(tradeManagerParams.Comment),
-          _consumeAllCalculatedLots(tradeManagerParams.ConsumeAllCalculatedLots),
           _riskManager(&riskManager),
           _tradesStore(new ObjectList<CKeyValuePair<ulong, TradeTypeEnum>>),
-          _tradesToVoidStore(new BasicList<ulong>)
+          _tradesToVoidStore(new BasicList<ulong>),
+          _symbolTradeFreezeLevel(
+              SymbolInfoInteger(contextParams.Symbol, SYMBOL_TRADE_FREEZE_LEVEL) * contextParams.Points)
     {
         // Set ea magic number
         _market.SetExpertMagicNumber(contextParams.MagicNumber);
@@ -93,9 +94,6 @@ class TradeManager
         // Check for old positions and orders
         RetriveOpenPositions();
         RetriveOpenOrders();
-
-        // Delte dto
-        delete &tradeManagerParams;
 
         _logger.LogInitCompleted(__FUNCTION__);
     };
@@ -110,6 +108,9 @@ class TradeManager
 
         // Trades to void store;
         delete _tradesToVoidStore;
+
+        // Delte trade manager params dto
+        delete _tradeManagerParams;
     }
 
     /**
@@ -180,7 +181,7 @@ class TradeManager
                     "Removing stored trade not found, ticket: " + (string)tradeTicket);
 
                 // Remove from store
-                _tradesStore.Remove(trade);
+                _tradesStore.Remove(trade, 1);
 
                 // Adjust loop index and exit
                 i--;
@@ -293,6 +294,98 @@ class TradeManager
     }
 
     /**
+     * Update position levels.
+     */
+    void UpdatePositionLevels()
+    {
+        // Disabled
+        if (_tradeManagerParams.BreakEvenAtPointsInProfit <= 0
+            // No trades in store
+            || _tradesStore.Count() == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _tradesStore.Count(); i++)
+        {
+            // Variables for readability
+            CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+            BreakEvenExecutionModeEnum breakEvenExecutionMode = _tradeManagerParams.BreakEvenExecutionMode;
+            bool isLong = trade.Value() == TRADE_TYPE_BUY;
+
+            // Open position check
+            if ((trade.Value() != TRADE_TYPE_BUY && trade.Value() != TRADE_TYPE_SELL)
+                // Trade type and execution mode check
+                || (breakEvenExecutionMode == BreakEvenExecutionModeEnum::BUY_POSITIONS && !isLong)
+                // Trade type and execution mode check
+                || (breakEvenExecutionMode == BreakEvenExecutionModeEnum::SELL_POSITIONS && isLong))
+            {
+                continue;
+            }
+
+            // Skip and remove from store if position cannot be selected
+            if (!PositionSelectByTicket(trade.Key()))
+            {
+                _tradesStore.Remove(trade, 1);
+
+                // Adjust index since trade store count got reduced
+                i--;
+                continue;
+            }
+
+            // Calculate position p/l points
+            double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+            double currentPrice = isLong ? MarketHelper::GetBidPrice(_contextParams.Symbol)
+                                         : MarketHelper::GetAskPrice(_contextParams.Symbol);
+            // Skip if position is in loss
+            if ((isLong && currentPrice <= openPrice)
+                //
+                || (!isLong && currentPrice >= openPrice))
+            {
+                continue;
+            }
+
+            // Skip if position profit is less then break event points required
+            if (MathAbs(openPrice - currentPrice) < (_tradeManagerParams.BreakEvenAtPointsInProfit * _contextParams.Points))
+            {
+                continue;
+            }
+
+            // Skip if position stop loss is already at break even or in profit
+            double stopLossPrice = PositionGetDouble(POSITION_SL);
+            if (stopLossPrice != 0
+                //
+                && ((isLong && stopLossPrice >= openPrice)
+                    //
+                    || (!isLong && stopLossPrice <= openPrice)))
+            {
+                // Note:
+                //  This check implicitly avoid the error: TRADE_RETCODE_NO_CHANGES
+                continue;
+            }
+
+            // Validate trade freeze level
+            if (!this.ValidateSymbolTradeFreezeLevel(currentPrice, openPrice, trade.Key()))
+            {
+                continue;
+            }
+
+            // Update order
+            _market.PositionModify(
+                trade.Key(),
+                openPrice,
+                PositionGetDouble(POSITION_TP));
+
+            // Check result
+            if (!IsResultRetcode(TRADE_RETCODE_DONE))
+            {
+                _logger.Log(ERROR, __FUNCTION__, "Setting break even failed with error: " + (string)GetLastError());
+                return;
+            }
+        }
+    }
+
+    /**
      * Close all position with matching symbol and magic number
      */
     void PositionCloseAll()
@@ -334,7 +427,7 @@ class TradeManager
         }
     }
 
-  private:
+private:
     /**
      * Open market position and check result code
      */
@@ -393,7 +486,7 @@ class TradeManager
                     openPrice,
                     stopLoss,
                     takeProfit,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
             else
             {
@@ -403,7 +496,7 @@ class TradeManager
                     openPrice,
                     stopLoss,
                     takeProfit,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
 
             // Check result
@@ -470,7 +563,7 @@ class TradeManager
                     takeProfit,
                     orderTypeTime,
                     orderExpiration,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
             else if (signalType == OPEN_BUY_STOP_ORDER)
             {
@@ -482,7 +575,7 @@ class TradeManager
                     takeProfit,
                     orderTypeTime,
                     orderExpiration,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
             else if (signalType == OPEN_SELL_LIMIT_ORDER)
             {
@@ -494,7 +587,7 @@ class TradeManager
                     takeProfit,
                     orderTypeTime,
                     orderExpiration,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
             else if (signalType == OPEN_SELL_STOP_ORDER)
             {
@@ -506,7 +599,7 @@ class TradeManager
                     takeProfit,
                     orderTypeTime,
                     orderExpiration,
-                    _comment);
+                    _tradeManagerParams.Comment);
             }
             else
             {
@@ -719,7 +812,7 @@ class TradeManager
         }
 
         // Exit if full lots consumption is allowed
-        if (_consumeAllCalculatedLots)
+        if (_tradeManagerParams.ConsumeAllCalculatedLots)
         {
             return true;
         }
@@ -760,6 +853,27 @@ class TradeManager
 
         _logger.Log(ERROR, __FUNCTION__, "Would exceed maximal allowed SYMBOL_VOLUME_LIMIT=" + (string)maxVolume);
         return false;
+    }
+
+    /**
+     * Validate order levels edit request is not within trade freeze levels.
+     * @param currentPrice is the ask (buy orders) or bid (sell orders) price
+     * @param orderPrice is the price of any type of pending order, take profit and stop loss
+     * included.
+     */
+    bool ValidateSymbolTradeFreezeLevel(double currentPrice, double orderPrice, ulong tradeTicket)
+    {
+        if (MathAbs(orderPrice - currentPrice) <= _symbolTradeFreezeLevel)
+        {
+            _logger.Log(
+                ERROR,
+                __FUNCTION__,
+                "Order (" + (string)tradeTicket + ") cannot be modified, orderd price is within trade freeze level");
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
