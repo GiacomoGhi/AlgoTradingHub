@@ -1,5 +1,5 @@
-#include "../../Libraries/List/BasicList.mqh";
-#include "../../Libraries/List/ObjectList.mqh";
+#include "../../../Libraries/List/BasicList.mqh";
+#include "../../../Libraries/List/ObjectList.mqh";
 #include "../../Shared/Helpers/MarketHelper.mqh";
 #include "../../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../../Shared/Logger/Logger.mqh";
@@ -299,14 +299,15 @@ public:
     void UpdatePositionLevels()
     {
         // Disabled
+        int tradeStoreCount = _tradesStore.Count();
         if (_tradeManagerParams.BreakEvenAtPointsInProfit <= 0
             // No trades in store
-            || _tradesStore.Count() == 0)
+            || tradeStoreCount == 0)
         {
             return;
         }
 
-        for (int i = 0; i < _tradesStore.Count(); i++)
+        for (int i = 0; i < tradeStoreCount; i++)
         {
             // Variables for readability
             CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
@@ -330,6 +331,7 @@ public:
 
                 // Adjust index since trade store count got reduced
                 i--;
+                tradeStoreCount--;
                 continue;
             }
 

@@ -1,4 +1,4 @@
-#include "../Libraries/List/ObjectList.mqh";
+#include "../../Libraries/List/ObjectList.mqh";
 #include "../Shared/Helpers/TradeSignalTypeEnumHelper.mqh";
 #include "../Shared/Interfaces/ITradeSignalProvider.mqh";
 #include "../Shared/Logger/Logger.mqh";
@@ -7,7 +7,7 @@
 template <typename TSignalsTypeEnum>
 class BaseIndicator : public ITradeSignalProvider
 {
-  protected:
+protected:
     /**
      * Logger.
      */
@@ -35,7 +35,7 @@ class BaseIndicator : public ITradeSignalProvider
      */
     ObjectList<CKeyValuePair<TradeSignalTypeEnum, TSignalsTypeEnum>> *_signalTypeTriggerList;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -61,7 +61,30 @@ class BaseIndicator : public ITradeSignalProvider
         delete _signalTypeTriggerList;
     }
 
-  protected:
+    /**
+     * ITradeSignalProvider implementation
+     */
+    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
+    {
+        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
+        {
+            // Variable for readability
+            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
+
+            // Add entry if missing
+            bool isValidSignal = true;
+            if (!signalsStore.TryGetValue(signalType, isValidSignal))
+            {
+                signalsStore.Add(signalType, isValidSignal);
+            }
+
+            // Update signal validity
+            isValidSignal &= IsIndicatorValidSignal(_signalTypeTriggerList[i].Value());
+            signalsStore.TrySetValue(signalType, isValidSignal);
+        }
+    };
+
+protected:
     // Get a signle value of the indicator
     double GetIndicatorValue(int shift = 0, int bufferNumber = 0)
     {
@@ -77,4 +100,17 @@ class BaseIndicator : public ITradeSignalProvider
 
         return valueContainer[0];
     };
+
+    /**
+     * Override this method to implement indicator
+     * specific logic to validate signal types.
+     */
+    virtual bool IsIndicatorValidSignal(TSignalsTypeEnum signalType)
+    {
+        switch (signalType)
+        {
+        default:
+            return false;
+        };
+    }
 }

@@ -3,7 +3,7 @@
 
 class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
 {
-  public:
+public:
     /**
      * Constructor
      */
@@ -39,34 +39,11 @@ class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
         this.BaseIndicatorDeconstructor();
     }
 
+protected:
     /**
-     * Base class ITradeSignalProvider implementation
+     * Base class method override.
      */
-    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
-    {
-        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
-        {
-            // Variable for readability
-            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
-
-            // Add entry if missing
-            bool isValidSignal = true;
-            if (!signalsStore.TryGetValue(signalType, isValidSignal))
-            {
-                signalsStore.Add(signalType, isValidSignal);
-            }
-
-            // Update signal validity
-            isValidSignal &= IsMovingAvarageValidSignal(_signalTypeTriggerList[i].Value());
-            signalsStore.TrySetValue(signalType, isValidSignal);
-        }
-    };
-
-  private:
-    /**
-     * Return signal method result given a signal type
-     */
-    bool IsMovingAvarageValidSignal(MovingAvarageSignalsEnum signalType)
+    bool IsIndicatorValidSignal(MovingAvarageSignalsEnum signalType) override
     {
         switch (signalType)
         {
@@ -99,6 +76,7 @@ class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
         };
     };
 
+private:
     /**
      * Check if previous candle close price is above the moving avarage
      */

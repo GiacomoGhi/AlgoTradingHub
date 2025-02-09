@@ -15,6 +15,7 @@
 // Include base system input params global variables files
 #include "../../Core/BaseSystemParams.mqh";
 #include "../../Core/Managers/RiskManager/Params/RiskParams.mqh";
+#include "../../Core/Managers/TradeManager/Params/TradeManagerParams.mqh";
 #include "./AdditionalParams/RiskParams.mqh";
 
 // Include indicators input params global variables files
@@ -96,9 +97,9 @@ int OnInit()
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(
         __base_system_name,
-        // Should be named "trade_manager" but sice there is only this
-        // we leave it in risk manager params
-        __risk_manager_consume_all_calculated_lots);
+        __trade_manager_break_even_at_points_in_profit,
+        __trade_manager_break_even_execution_mode,
+        __trade_manager_consume_all_calculated_lots);
 
     // Risk manager periods allowed drowdown store
     ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *periodAllowedDrawdownStore = new ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>>();

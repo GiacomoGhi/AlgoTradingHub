@@ -3,7 +3,7 @@
 
 class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
 {
-  private:
+private:
     /**
      * Open trade hour.
      */
@@ -24,7 +24,7 @@ class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
      */
     int _rangeEndHour;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -53,34 +53,11 @@ class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
         this.BaseIndicatorDeconstructor();
     }
 
+protected:
     /**
-     * Base class ITradeSignalProvider implementation
+     * Base class method override.
      */
-    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
-    {
-        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
-        {
-            // Variable for readability
-            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
-
-            // Add entry if missing
-            bool isValidSignal = true;
-            if (!signalsStore.TryGetValue(signalType, isValidSignal))
-            {
-                signalsStore.Add(signalType, isValidSignal);
-            }
-
-            // Update signal validity
-            isValidSignal &= IsTimeIndicatorValidSignal(_signalTypeTriggerList[i].Value());
-            signalsStore.TrySetValue(signalType, isValidSignal);
-        }
-    };
-
-  private:
-    /**
-     * Return signal method result given a signal type
-     */
-    bool IsTimeIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)
+    bool IsIndicatorValidSignal(TimeIndicatorSignalsEnum signalType)
     {
         switch (signalType)
         {
@@ -98,6 +75,7 @@ class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
         };
     };
 
+private:
     /**
      * Current hour equal to open trade hour
      */

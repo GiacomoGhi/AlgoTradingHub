@@ -42,34 +42,11 @@ public:
         this.BaseIndicatorDeconstructor();
     }
 
+protected:
     /**
-     * Base class ITradeSignalProvider implementation
+     * Base class method override.
      */
-    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
-    {
-        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
-        {
-            // Variable for readability
-            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
-
-            // Add entry if missing
-            bool isValidSignal = true;
-            if (!signalsStore.TryGetValue(signalType, isValidSignal))
-            {
-                signalsStore.Add(signalType, isValidSignal);
-            }
-
-            // Update signal validity
-            isValidSignal &= IsStaticRangeValidSignal(_signalTypeTriggerList[i].Value());
-            signalsStore.TrySetValue(signalType, isValidSignal);
-        }
-    };
-
-private:
-    /**
-     * Return signal method result given a signal type
-     */
-    bool IsStaticRangeValidSignal(StaticRangeSignalsEnum signalType)
+    bool IsIndicatorValidSignal(StaticRangeSignalsEnum signalType) override
     {
         switch (signalType)
         {
@@ -90,6 +67,7 @@ private:
         };
     };
 
+private:
     /**
      * Checks that current bid price is above min price
      */

@@ -1,5 +1,5 @@
 #include "../../../Shared/Interfaces/ITradeSignalProvider.mqh";
-#include "../../../Libraries/List/ObjectList.mqh";
+#include "../../../../Libraries/List/ObjectList.mqh";
 
 class SignalManagerParams
 {

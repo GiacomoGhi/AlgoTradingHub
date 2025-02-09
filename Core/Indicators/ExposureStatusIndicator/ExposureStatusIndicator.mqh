@@ -3,7 +3,7 @@
 
 class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSignalsEnum>
 {
-  private:
+private:
     /**
      * Expert advisor unique identifier.
      */
@@ -14,7 +14,7 @@ class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSign
      */
     ulong _storedTicket;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -38,34 +38,11 @@ class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSign
         this.BaseIndicatorDeconstructor();
     }
 
+protected:
     /**
-     * Base class ITradeSignalProvider implementation
+     * Base class method override.
      */
-    void UpdateSignalStore(CHashMap<TradeSignalTypeEnum, bool> &signalsStore) override
-    {
-        for (int i = 0; i < _signalTypeTriggerList.Count(); i++)
-        {
-            // Variable for readability
-            TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
-
-            // Add entry if missing
-            bool isValidSignal = true;
-            if (!signalsStore.TryGetValue(signalType, isValidSignal))
-            {
-                signalsStore.Add(signalType, isValidSignal);
-            }
-
-            // Update signal validity
-            isValidSignal &= IsExposureStatusIndicatorValidSignal(_signalTypeTriggerList[i].Value());
-            signalsStore.TrySetValue(signalType, isValidSignal);
-        }
-    };
-
-  private:
-    /**
-     * Return signal method result given a signal type
-     */
-    bool IsExposureStatusIndicatorValidSignal(ExposureStatusIndicatorSignalsEnum signalType)
+    bool IsIndicatorValidSignal(ExposureStatusIndicatorSignalsEnum signalType) override
     {
         switch (signalType)
         {
@@ -86,6 +63,7 @@ class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSign
         };
     }
 
+private:
     /**
      * Check for open positions by magic num, return true if one open position is found
      */

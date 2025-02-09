@@ -1,7 +1,7 @@
 #include <Trade/AccountInfo.mqh>
 #include <Trade/SymbolInfo.mqh>
 
-#include "../../Libraries/List/BasicList.mqh";
+#include "../../../Libraries/List/BasicList.mqh";
 #include "../../Shared/Helpers/MathHelper.mqh";
 #include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
@@ -11,13 +11,13 @@
 
 class RiskManager
 {
-  public:
+public:
     /**
      * Flags to check after object init. Is false in case of invalid input params.
      */
     const bool IsInitCompleted;
 
-  private:
+private:
     /**
      * Logger.
      */
@@ -48,7 +48,7 @@ class RiskManager
      */
     ObjectList<PeriodDrawdownItem> *_periodAllowedDrawdownStore;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -211,7 +211,7 @@ class RiskManager
         return result;
     }
 
-  private:
+private:
     /**
      * Normalize lot size.
      * Round volume to the closest number that is a multiple of symbol volume step.
@@ -236,7 +236,7 @@ class RiskManager
         if (periodAllowedDrawdownStore.Count() == 0)
         {
             delete &periodAllowedDrawdownStore;
-            return true; 
+            return true;
         }
 
         // Temporary list to store time frames
