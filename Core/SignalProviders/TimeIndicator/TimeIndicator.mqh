@@ -1,7 +1,7 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/TimeIndicatorSignalsEnum.mqh";
 
-class TimeIndicator : public BaseIndicator<TimeIndicatorSignalsEnum>
+class TimeIndicator : public BaseSignalProvider<TimeIndicatorSignalsEnum>
 {
 private:
     /**
@@ -40,7 +40,7 @@ public:
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
           _rangeEndHour(rangeStopHour),
-          BaseIndicator(&logger, symbol, signalTypeTriggerStore)
+          BaseSignalProvider(&logger, symbol, signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(__FUNCTION__);
     }

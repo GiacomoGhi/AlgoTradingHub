@@ -2,7 +2,7 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/StaticRangeSignalsEnum.mqh";
 
-class StaticRange : public BaseIndicator<StaticRangeSignalsEnum>
+class StaticRange : public BaseSignalProvider<StaticRangeSignalsEnum>
 {
 private:
     double _minPrice;
@@ -26,7 +26,7 @@ public:
           _maxPrice(maxPrice),
           _magicNumber(magicNumber),
           _positionsDeltaPoints(positionsDeltaPoints * SymbolInfoDouble(symbol, SYMBOL_POINT)),
-          BaseIndicator(
+          BaseSignalProvider(
               &logger,
               symbol,
               signalTypeTriggerStore)

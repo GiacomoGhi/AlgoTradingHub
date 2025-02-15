@@ -5,7 +5,7 @@
 #include <Generic\HashMap.mqh>;
 
 template <typename TSignalsTypeEnum>
-class BaseIndicator : public ITradeSignalProvider
+class BaseSignalProvider : public ITradeSignalProvider
 {
 protected:
     /**
@@ -39,7 +39,7 @@ public:
     /**
      * Constructor
      */
-    BaseIndicator(
+    BaseSignalProvider(
         Logger &logger,
         string symbol,
         ObjectList<CKeyValuePair<TradeSignalTypeEnum, TSignalsTypeEnum>> &signalTypeTriggerList,

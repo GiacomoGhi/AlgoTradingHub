@@ -1,7 +1,7 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/MovingAvarageSignalsEnum.mqh";
 
-class MovingAvarage : public BaseIndicator<MovingAvarageSignalsEnum>
+class MovingAvarage : public BaseSignalProvider<MovingAvarageSignalsEnum>
 {
 public:
     /**
@@ -16,7 +16,7 @@ public:
         int shift,
         ENUM_MA_METHOD method,
         ENUM_APPLIED_PRICE appliedPrice)
-        : BaseIndicator(
+        : BaseSignalProvider(
               &logger,
               symbol,
               signalTypeTriggerStore,

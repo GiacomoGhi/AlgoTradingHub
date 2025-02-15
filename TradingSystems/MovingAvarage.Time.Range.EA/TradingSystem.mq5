@@ -18,11 +18,13 @@
 #include "../../Core/Managers/TradeManager/Params/TradeManagerParams.mqh";
 #include "./AdditionalParams/RiskParams.mqh";
 
-// Include indicators input params global variables files
-#include "../../Core/Indicators/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh";
-#include "../../Core/Indicators/FixedTradeLevels/Params/FixedTradeLevelsParams.mqh";
-#include "../../Core/Indicators/MovingAvarage/Params/MovingAvarageParams.0.mqh";
-#include "../../Core/Indicators/TimeIndicator/Params/TimeIndicatorParams.0.mqh";
+// Include trade levels provider
+#include "../../Core/TradeLevelsProviders/FixedTradeLevels/Params/FixedTradeLevelsParams.mqh";
+
+// Include signal providers input params global variables files
+#include "../../Core/SignalProviders/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh";
+#include "../../Core/SignalProviders/MovingAvarage/Params/MovingAvarageParams.0.mqh";
+#include "../../Core/SignalProviders/TimeIndicator/Params/TimeIndicatorParams.0.mqh";
 
 // ATH Expert advisor object
 ATHExpertAdvisor *TradingSystem;

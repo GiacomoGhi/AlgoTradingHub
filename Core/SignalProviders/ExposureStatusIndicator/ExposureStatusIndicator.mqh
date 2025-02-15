@@ -1,7 +1,7 @@
 #include "../BaseIndicator.mqh";
 #include "./Models/ExposureStatusIndicatorSignalsEnum.mqh";
 
-class ExposureStatusIndicator : public BaseIndicator<ExposureStatusIndicatorSignalsEnum>
+class ExposureStatusIndicator : public BaseSignalProvider<ExposureStatusIndicatorSignalsEnum>
 {
 private:
     /**
@@ -25,7 +25,7 @@ public:
         ulong magicNumber)
         : _magicNumber(magicNumber),
           _storedTicket(0),
-          BaseIndicator(&logger, symbol, signalTypeTriggerStore)
+          BaseSignalProvider(&logger, symbol, signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(__FUNCTION__);
     }
