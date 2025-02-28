@@ -71,6 +71,11 @@ public:
             // Variable for readability
             TradeSignalTypeEnum signalType = _signalTypeTriggerList[i].Key();
 
+            if (signalType == TradeSignalTypeEnum::NONE)
+            {
+                continue;
+            }
+
             // Add entry if missing
             bool isValidSignal = true;
             if (!signalsStore.TryGetValue(signalType, isValidSignal))

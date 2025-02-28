@@ -24,6 +24,16 @@ private:
      */
     int _rangeEndHour;
 
+    /**
+     * Range start day.
+     */
+    int _rangeStartDay;
+
+    /**
+     * Range end day.
+     */
+    int _rangeEndDay;
+
 public:
     /**
      * Constructor
@@ -35,11 +45,15 @@ public:
         int openTradeHour,
         int closeTradeHour,
         int rangeStartHour = 0,
-        int rangeStopHour = 0)
+        int rangeEndHour = 0,
+        int rangeStartDay = 0,
+        int rangeEndDay = 0)
         : _openTradeHour(openTradeHour),
           _closeTradeHour(closeTradeHour),
           _rangeStartHour(rangeStartHour),
-          _rangeEndHour(rangeStopHour),
+          _rangeEndHour(rangeEndHour),
+          _rangeStartDay(rangeStartDay),
+          _rangeEndDay(rangeEndDay),
           BaseIndicator(&logger, symbol, signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(__FUNCTION__);
@@ -62,13 +76,28 @@ protected:
         switch (signalType)
         {
         case CURRENT_HOUR_IS_OPEN_HOUR:
-            return IsCurrentHourOpenHour();
+            return IsCurrentHour(_openTradeHour);
 
         case CURRENT_HOUR_IS_CLOSE_HOUR:
-            return IsCurrentHourCloseHour();
+            return IsCurrentHour(_closeTradeHour);
 
-        case CURRENT_TIME_IS_IN_RANGE:
-            return IsCurrentTimeInRange();
+        case CURRENT_DAY_IS_START_DAY:
+            return IsCurrentDay(_rangeStartDay);
+
+        case CURRENT_DAY_IS_END_DAY:
+            return IsCurrentDay(_rangeEndDay);
+
+        case CURRENT_DAY_IS_NOT_START_DAY:
+            return !IsCurrentDay(_rangeStartDay);
+
+        case CURRENT_DAY_IS_NOT_END_DAY:
+            return !IsCurrentDay(_rangeEndDay);
+
+        case CURRENT_TIME_IS_IN_TIME_RANGE:
+            return IsCurrentTimeInTimeRange();
+
+        case CURRENT_TIME_IS_IN_DAY_RANGE:
+            return IsCurrentTimeInDayRange();
 
         default:
             return false;
@@ -79,37 +108,46 @@ private:
     /**
      * Current hour equal to open trade hour
      */
-    bool IsCurrentHourOpenHour()
+    bool IsCurrentHour(int hourToCompare)
     {
-        return GetCurrentHour() == _openTradeHour;
+        return GetCurrentTimeStruct().hour == hourToCompare;
     };
 
     /**
-     * Current hour equals to close trade hour
+     * Current hour equal to open trade hour
      */
-    bool IsCurrentHourCloseHour()
+    bool IsCurrentDay(int dayToCompare)
     {
-        return GetCurrentHour() == _closeTradeHour;
+        return GetCurrentTimeStruct().day == dayToCompare;
     };
 
     /**
      * Range start hour <= Current time < Range end hour
      */
-    bool IsCurrentTimeInRange()
+    bool IsCurrentTimeInTimeRange()
     {
-        int currentHour = GetCurrentHour();
+        int currentHour = GetCurrentTimeStruct().hour;
         return _rangeStartHour <= currentHour && currentHour < _rangeEndHour;
     };
 
     /**
-     * Returns the current hour
+     * Range start day <= Current time < Range end day
      */
-    int GetCurrentHour()
+    bool IsCurrentTimeInDayRange()
+    {
+        int currentDay = GetCurrentTimeStruct().day;
+        return _rangeStartDay <= currentDay && currentDay < _rangeEndDay;
+    };
+
+    /**
+     * Returns the current time struct
+     */
+    MqlDateTime GetCurrentTimeStruct()
     {
         MqlDateTime timeStruct;
 
         TimeToStruct(iTime(_symbol, PERIOD_H1, 0), timeStruct);
 
-        return timeStruct.hour;
+        return timeStruct;
     };
 }

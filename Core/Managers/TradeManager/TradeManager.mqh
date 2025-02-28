@@ -116,7 +116,7 @@ public:
     /**
      * Select lastest position with given magicNumber
      */
-    static bool SelectLatestPosition(Logger &logger, ulong magicNumber)
+    static bool SelectLatestPosition(Logger &logger, ulong magicNumber, string symbol, int direction = 0)
     {
         // For all open positions
         for (int i = PositionsTotal() - 1; i >= 0; i--)
@@ -125,10 +125,20 @@ public:
             ulong ticket = PositionGetTicket(i);
             if (PositionSelectByTicket(ticket))
             {
-                // Compare magic and symbol of position
-                if (PositionGetInteger(POSITION_MAGIC) == magicNumber)
+                // Get position type
+                ENUM_POSITION_TYPE positionType = (ENUM_POSITION_TYPE)(PositionGetInteger(POSITION_TYPE));
+
+                // Compare magic
+                if (PositionGetInteger(POSITION_MAGIC) == magicNumber
+                    // Symbol of position
+                    && PositionGetString(POSITION_SYMBOL) == symbol
+                    // Flat (any direction)
+                    && (direction == 0
+                        // Long
+                        || (direction == 1 && positionType == POSITION_TYPE_BUY)
+                        // Short
+                        || (direction == -1 && positionType == POSITION_TYPE_SELL)))
                 {
-                    logger.Log(DEBUG, __FUNCTION__, "Position ticket: " + (string)ticket);
                     return true;
                 }
             }
@@ -145,7 +155,7 @@ public:
     {
         if (TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type");
+            _logger.Log(ERROR, __FUNCTION__, "Unsupported close or delete signal type: " + EnumToString(signalType));
             return;
         }
 
@@ -207,7 +217,7 @@ public:
         // Exit if signal is not an "open" type
         if (!TradeSignalTypeEnumHelper::IsOpenType(signalType))
         {
-            _logger.Log(ERROR, __FUNCTION__, "Unsupported signal type");
+            _logger.Log(ERROR, __FUNCTION__, "Unsupported open signal type: " + EnumToString(signalType));
             return;
         }
         // If open at market type, execute it and then exit

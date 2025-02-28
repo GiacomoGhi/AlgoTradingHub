@@ -1,0 +1,2 @@
+input TradeSignalTypeEnum __exposure_status_indicator_0_signal_type_0 = TradeSignalTypeEnum::OPEN_SELL_MARKET;                                        // Trade signal type
+input ExposureStatusIndicatorSignalsEnum __exposure_status_indicator_0_signal_trigger_0 = ExposureStatusIndicatorSignalsEnum::NOT_ANY_SELL_POSITIONS; // Trade signal trigger

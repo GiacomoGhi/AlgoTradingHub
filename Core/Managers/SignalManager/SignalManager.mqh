@@ -6,7 +6,7 @@
 
 class SignalManager
 {
-  private:
+private:
     /**
      * Logger.
      */
@@ -22,7 +22,7 @@ class SignalManager
      */
     CHashMap<TradeSignalTypeEnum, bool> *_signalsStore;
 
-  public:
+public:
     /**
      * Constructor
      */
@@ -84,7 +84,6 @@ class SignalManager
 
                 // Add signal to execute
                 signalsToExecute.Append(signal);
-                _logger.Log(DEBUG, __FUNCTION__, "Added signal: " + EnumToString(signal));
             }
 
             // Delete dto
