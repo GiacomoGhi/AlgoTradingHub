@@ -620,7 +620,7 @@ private:
             }
 
             // Check result
-            if (!IsResultRetcode(TRADE_RETCODE_PLACED))
+            if (!IsResultRetcode(TRADE_RETCODE_DONE))
             {
                 _logger.Log(ERROR, __FUNCTION__, "Trade failed with error: " + (string)GetLastError());
                 return;
@@ -629,7 +629,7 @@ private:
             // Store into trades tickets store
             _tradesStore.Append(
                 new CKeyValuePair<ulong, TradeTypeEnum>(
-                    _market.ResultDeal(),
+                    _market.ResultOrder(),
                     TradeTypeEnumHelper::Map(signalType)));
 
             volume -= volumeToOpen;

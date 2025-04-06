@@ -25,6 +25,11 @@ public:
   const double SizeValueOrPercentageShort;
 
   /**
+   * If true, long trades calculation type and value will be used also for shorts.
+   */
+  const bool UseLongValueForBoth;
+
+  /**
    * List of max allowed dowrdown (value) during the selected period (time frame)
    */
   ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *PeriodAllowedDrawdownStore;
@@ -39,7 +44,8 @@ public:
         riskManagerParams.SizeValueOrPercentageLong,
         riskManagerParams.SizeCalculationTypeShort,
         riskManagerParams.SizeValueOrPercentageShort,
-        riskManagerParams.PeriodAllowedDrawdownStore);
+        riskManagerParams.PeriodAllowedDrawdownStore,
+        riskManagerParams.UseLongValueForBoth);
   };
 
   /**
@@ -50,10 +56,12 @@ public:
       double sizeValueOrPercentageLong,
       SizeCalculationTypeEnum sizeCalculationTypeShort,
       double sizeValueOrPercentageShort,
-      ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore)
+      ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore,
+      bool useLongValueForBoth = false)
       : SizeCalculationTypeLong(sizeCalculationTypeLong),
         SizeValueOrPercentageLong(sizeValueOrPercentageLong),
         SizeCalculationTypeShort(sizeCalculationTypeShort),
         SizeValueOrPercentageShort(sizeValueOrPercentageShort),
-        PeriodAllowedDrawdownStore(&periodAllowedDrawdownStore) {};
+        PeriodAllowedDrawdownStore(&periodAllowedDrawdownStore),
+        UseLongValueForBoth(useLongValueForBoth) {};
 }

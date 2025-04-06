@@ -120,9 +120,9 @@ private:
         case PERIOD_MN1:
             return (ulong)(60 * 60 * 24 * 30);
 
-        // Default is one year period.
+        // Default is 20 year period.
         default:
-            return (ulong)(60 * 60 * 24 * 365);
+            return (ulong)(60 * 60 * 24 * 365 * 20);
         }
     }
 }

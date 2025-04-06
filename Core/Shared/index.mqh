@@ -6,7 +6,8 @@
 #include "./Interfaces/ITradeLevelsIndicator.mqh";
 
 // Enums
-#include "./Enums/TradeSignalTypeEnum.mqh"
+#include "./Enums/TradeSignalTypeEnum.mqh";
+#include "./Enums/SymbolEnum.mqh";
 
 // Helpers
 #include "./Helpers/MarketHelper.mqh";

@@ -9,11 +9,6 @@ private:
      */
     const ulong _magicNumber;
 
-    /**
-     * Stored ticket to speed up open positions and orders checks.
-     */
-    ulong _storedTicket;
-
 public:
     /**
      * Constructor
@@ -24,7 +19,6 @@ public:
         ObjectList<CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>> &signalTypeTriggerStore,
         ulong magicNumber)
         : _magicNumber(magicNumber),
-          _storedTicket(0),
           BaseIndicator(&logger, symbol, signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(__FUNCTION__);
@@ -57,6 +51,18 @@ protected:
 
         case NOT_ANY_PLACED_ORDER:
             return !IsAnyOrderPlaced();
+
+        case NOT_ANY_PLACED_BUY_LIMIT_ORDER:
+            return !IsAnyOrderPlaced(ORDER_TYPE_BUY_LIMIT);
+
+        case NOT_ANY_PLACED_SELL_LIMIT_ORDER:
+            return !IsAnyOrderPlaced(ORDER_TYPE_SELL_LIMIT);
+
+        case NOT_ANY_PLACED_BUY_STOP_ORDER:
+            return !IsAnyOrderPlaced(ORDER_TYPE_BUY_STOP);
+
+        case NOT_ANY_PLACED_SELL_STOP_ORDER:
+            return !IsAnyOrderPlaced(ORDER_TYPE_SELL_STOP);
 
         default:
             return false;
@@ -110,14 +116,8 @@ private:
     /**
      * Check for placed orders by magic num, return true if one placed order is found
      */
-    bool IsAnyOrderPlaced()
+    bool IsAnyOrderPlaced(ENUM_ORDER_TYPE type = 0)
     {
-        // Check stored ticket first
-        if (OrderSelect(_storedTicket))
-        {
-            return true;
-        }
-
         // For all placed orders
         for (int i = 0; i < OrdersTotal(); i++)
         {
@@ -126,9 +126,10 @@ private:
             if (OrderSelect(ticket))
             {
                 // Check with magic number
-                if (OrderGetInteger(ORDER_MAGIC) == _magicNumber)
+                if (OrderGetInteger(ORDER_MAGIC) == _magicNumber
+                    // Check type
+                    && (type == 0 || OrderGetInteger(ORDER_TYPE) == type))
                 {
-                    _storedTicket = ticket;
                     return true;
                 }
             }

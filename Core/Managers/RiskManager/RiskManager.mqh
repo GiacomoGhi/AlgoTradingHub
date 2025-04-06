@@ -96,11 +96,15 @@ public:
     {
         bool isLong = TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignalType);
 
-        const SizeCalculationTypeEnum sizeCalculationType = isLong
+        const SizeCalculationTypeEnum sizeCalculationType = _params.UseLongValueForBoth
+                                                                ? _params.SizeCalculationTypeLong
+                                                            : isLong
                                                                 ? _params.SizeCalculationTypeLong
                                                                 : _params.SizeCalculationTypeShort;
 
-        const double sizeValueOrPercentage = isLong
+        const double sizeValueOrPercentage = _params.UseLongValueForBoth
+                                                 ? _params.SizeValueOrPercentageLong
+                                             : isLong
                                                  ? _params.SizeValueOrPercentageLong
                                                  : _params.SizeValueOrPercentageShort;
 
@@ -149,10 +153,13 @@ public:
                                             : _accountInfo.Balance() * (sizeValueOrPercentage / 100);
 
             // Calculate lots using calculated profit
+            calculatedProfit = isLong
+                                   ? -calculatedProfit
+                                   : calculatedProfit;
             const double calculatedLots = round(MathHelper::SafeDivision(
                                               _logger,
                                               positionRisk * _symbolInfo.LotsMax(),
-                                              (-calculatedProfit * _symbolInfo.LotsStep()))) *
+                                              (calculatedProfit * _symbolInfo.LotsStep()))) *
                                           _symbolInfo.LotsStep();
 
             return NormalizeVolume(calculatedLots);

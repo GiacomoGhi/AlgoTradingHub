@@ -1,12 +1,13 @@
-;
+#include "../Enums/SymbolEnum.mqh";
+
 class MarketHelper
 {
-  private:
+private:
     MarketHelper()
     {
     }
 
-  public:
+public:
     /**
      * Get ask price
      */
@@ -37,5 +38,18 @@ class MarketHelper
     static double GetOpenPrice(string symbol, int shift = 1, ENUM_TIMEFRAMES timeFrame = PERIOD_CURRENT)
     {
         return iOpen(symbol, timeFrame, shift);
+    }
+
+    /**
+     * Map SymbolEnum to string with suffix
+     */
+    static string MapSymbol(SymbolEnum symbolEnum, string suffix)
+    {
+        if (symbolEnum == CHART)
+        {
+            // Return global variable value for the current chart symbol
+            return _Symbol;
+        }
+        return EnumToString(symbolEnum) + suffix;
     }
 }
