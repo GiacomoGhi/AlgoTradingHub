@@ -10,6 +10,11 @@ private:
     double _priceDeltaPoints;
     ulong _magicNumber;
     double _positionsDeltaPoints;
+    bool _useShiftedStartPrice;
+
+    // Stataus property
+    bool _startPriceReachedAboveMinPrice;
+    bool _startPriceReachedBelowMaxPrice;
 
 public:
     /**
@@ -23,18 +28,22 @@ public:
         double minPrice,
         double maxPrice,
         double priceDeltaPoints,
-        double positionsDeltaPoints)
+        double positionsDeltaPoints,
+        bool useShiftedStartPrice = false)
         : _minPrice(minPrice),
           _maxPrice(maxPrice),
           _priceDeltaPoints(priceDeltaPoints * SymbolInfoDouble(symbol, SYMBOL_POINT)),
           _magicNumber(magicNumber),
           _positionsDeltaPoints(positionsDeltaPoints * SymbolInfoDouble(symbol, SYMBOL_POINT)),
+          _useShiftedStartPrice(useShiftedStartPrice),
           BaseIndicator(
               &logger,
               symbol,
               signalTypeTriggerStore)
     {
         _logger.LogInitCompleted(__FUNCTION__);
+        _startPriceReachedAboveMinPrice = false;
+        _startPriceReachedBelowMaxPrice = false;
     }
 
     /**
@@ -108,7 +117,26 @@ private:
      */
     bool IsPriceBelowMaxPriceSignal()
     {
-        return MarketHelper::GetBidPrice(_symbol) < _maxPrice;
+        // Check if not use shifted start price
+        double bidPrice = MarketHelper::GetBidPrice(_symbol);
+        if (!_useShiftedStartPrice)
+        {
+            return bidPrice < _maxPrice;
+        }
+
+        // Check for start price reached
+        if (!_startPriceReachedBelowMaxPrice)
+        {
+            _startPriceReachedBelowMaxPrice = bidPrice <= (_maxPrice + _priceDeltaPoints);
+        }
+
+        // Check min price reached
+        if (_startPriceReachedBelowMaxPrice && bidPrice > _maxPrice)
+        {
+            _startPriceReachedBelowMaxPrice = false;
+        }
+
+        return _startPriceReachedBelowMaxPrice;
     }
 
     /**
@@ -116,7 +144,26 @@ private:
      */
     bool IsPriceAboveMinPriceSignal()
     {
-        return MarketHelper::GetBidPrice(_symbol) > _minPrice;
+        // Check if not use shifted start price
+        double bidPrice = MarketHelper::GetBidPrice(_symbol);
+        if (!_useShiftedStartPrice)
+        {
+            return bidPrice > _minPrice;
+        }
+
+        // Check for start price reached
+        if (!_startPriceReachedAboveMinPrice)
+        {
+            _startPriceReachedAboveMinPrice = bidPrice >= (_minPrice + _priceDeltaPoints);
+        }
+
+        // Check min price reached
+        if (_startPriceReachedAboveMinPrice && bidPrice < _minPrice)
+        {
+            _startPriceReachedAboveMinPrice = false;
+        }
+
+        return _startPriceReachedAboveMinPrice;
     }
 
     /**

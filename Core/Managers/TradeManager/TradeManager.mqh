@@ -439,6 +439,91 @@ public:
         }
     }
 
+    /**
+     * Close all flat positions with matching symbol and magic number.
+     */
+    void CloseFlatMediationPositions()
+    {
+        if (_tradesStore.Count() == 0)
+        {
+            return;
+        }
+
+        // For all open positions
+        int longMediationPositionsCount = 0;
+        double longPositionProfit = 0;
+        int shortMediationPositionsCount = 0;
+        double shortPositionProfit = 0;
+        for (int i = 0; i < _tradesStore.Count(); i++)
+        {
+            // Get trade
+            CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+
+            // Select position
+            if (!PositionSelectByTicket(trade.Key()))
+            {
+                // Remove from store
+                _tradesStore.Remove(trade, 1);
+
+                // Adjust loop index and exit
+                i--;
+                continue;
+            }
+
+            // Check if position is flat
+            if (trade.Value() == TRADE_TYPE_BUY)
+            {
+                // If position dose not have tp or sl set its a mediation position
+                if (PositionGetDouble(POSITION_SL) == 0 && PositionGetDouble(POSITION_TP) == 0)
+                {
+                    longMediationPositionsCount++;
+                }
+
+                // Add profit to total profit
+                longPositionProfit += PositionGetDouble(POSITION_PROFIT);
+            }
+            else if (trade.Value() == TRADE_TYPE_SELL)
+            {
+                // If position dose not have tp or sl set its a mediation position
+                if (PositionGetDouble(POSITION_SL) == 0 && PositionGetDouble(POSITION_TP) == 0)
+                {
+                    shortMediationPositionsCount++;
+                }
+
+                // Add profit to total profit
+                shortPositionProfit += PositionGetDouble(POSITION_PROFIT);
+            }
+        }
+
+        // Close long positions
+        if (longMediationPositionsCount > 0 && longPositionProfit >= 0)
+        {
+            for (int i = 0; i < _tradesStore.Count(); i++)
+            {
+                // Get trade
+                CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+                if (trade.Value() == TRADE_TYPE_BUY)
+                {
+                    _market.PositionClose(trade.Key());
+                }
+            }
+        }
+
+        // Close short positions
+        if (shortMediationPositionsCount > 0 && shortPositionProfit >= 0)
+        {
+            for (int i = 0; i < _tradesStore.Count(); i++)
+            {
+                // Get trade
+                CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+                if (trade.Value() == TRADE_TYPE_SELL)
+                {
+                    _market.PositionClose(trade.Key());
+                }
+            }
+        }
+    }
+
 private:
     /**
      * Open market position and check result code

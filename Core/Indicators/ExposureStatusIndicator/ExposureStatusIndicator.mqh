@@ -9,6 +9,11 @@ private:
      */
     const ulong _magicNumber;
 
+    /**
+     * Stored ticket for open position.
+     */
+    ulong _storedTicket;
+
 public:
     /**
      * Constructor

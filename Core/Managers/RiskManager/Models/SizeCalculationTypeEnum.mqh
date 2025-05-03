@@ -27,5 +27,21 @@ enum SizeCalculationTypeEnum
      * It is used to enter and edged state.
      * Note that size value or percentage value will be ignored.
      */
-    MATCH_OPPOSITE_DIRECTION_VOLUME
+    MATCH_OPPOSITE_DIRECTION_VOLUME,
+
+    /**
+     * Calculate position size based on price.
+     * For long trades: the lower the price, the bigger the lot size.
+     * For short trades: the higher the price, the bigger the lot size.
+     * Total openable positions size is fixed.
+     */
+    PRICE_BASED_SIZE_FIXED,
+
+    /**
+     * Calculate position size based on price.
+     * For long trades: the lower the price, the bigger the lot size.
+     * For short trades: the higher the price, the bigger the lot size.
+     * Total openable positions size is progressive (one lot every).
+     */
+    PRICE_BASED_SIZE_PROGRESSIVE,
 }

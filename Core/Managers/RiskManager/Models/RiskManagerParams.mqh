@@ -35,6 +35,16 @@ public:
   ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> *PeriodAllowedDrawdownStore;
 
   /**
+   * Price based size calculation parameters.
+   * MaxPrice is the price at which the minimum lot size will be used.
+   * MinPrice is the price at which the maximum lot size will be used.
+   * PriceDelta is the difference between each possible price level.
+   */
+  double MaxPrice;
+  double MinPrice;
+  double PriceDelta;
+
+  /**
    * Contructor by copy.
    */
   RiskManagerParams(RiskManagerParams &riskManagerParams)
@@ -45,7 +55,10 @@ public:
         riskManagerParams.SizeCalculationTypeShort,
         riskManagerParams.SizeValueOrPercentageShort,
         riskManagerParams.PeriodAllowedDrawdownStore,
-        riskManagerParams.UseLongValueForBoth);
+        riskManagerParams.UseLongValueForBoth,
+        riskManagerParams.MaxPrice,
+        riskManagerParams.MinPrice,
+        riskManagerParams.PriceDelta);
   };
 
   /**
@@ -57,11 +70,17 @@ public:
       SizeCalculationTypeEnum sizeCalculationTypeShort,
       double sizeValueOrPercentageShort,
       ObjectList<CKeyValuePair<ENUM_TIMEFRAMES, double>> &periodAllowedDrawdownStore,
-      bool useLongValueForBoth = false)
+      bool useLongValueForBoth = false,
+      double maxPrice = 0,
+      double minPrice = 0,
+      double priceDelta = 0)
       : SizeCalculationTypeLong(sizeCalculationTypeLong),
         SizeValueOrPercentageLong(sizeValueOrPercentageLong),
         SizeCalculationTypeShort(sizeCalculationTypeShort),
         SizeValueOrPercentageShort(sizeValueOrPercentageShort),
         PeriodAllowedDrawdownStore(&periodAllowedDrawdownStore),
+        MaxPrice(maxPrice),
+        MinPrice(minPrice),
+        PriceDelta(priceDelta),
         UseLongValueForBoth(useLongValueForBoth) {};
 }

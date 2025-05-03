@@ -44,6 +44,11 @@ private:
      */
     BasicList<TradeSignalTypeEnum> *_signalsToExecute;
 
+    /**
+     * Is grid trading enabled flag.
+     */
+    bool _isGridTradingEnabled;
+
 public:
     /**
      * Constructor
@@ -54,10 +59,12 @@ public:
         TradeManagerParams &tradeManagerParams,
         RiskManagerParams &riskManagerParams,
         SignalManagerParams &signalManagerParams,
-        ITradeLevelsIndicator &tradeLevelsIndicator)
+        ITradeLevelsIndicator &tradeLevelsIndicator,
+        bool isGridTradingEnabled = false)
         : _logger(&logger),
           _contextParams(&contextParams),
-          _tradeLevelsIndicator(&tradeLevelsIndicator)
+          _tradeLevelsIndicator(&tradeLevelsIndicator),
+          _isGridTradingEnabled(isGridTradingEnabled)
     {
         IsInitCompleted = true;
 
@@ -126,6 +133,12 @@ public:
             _tradeManager.OrderDeleteAll();
 
             return;
+        }
+
+        // Close flat mediation positions
+        if (_isGridTradingEnabled)
+        {
+            _tradeManager.CloseFlatMediationPositions();
         }
 
         // Delete trades that failed to be deleted

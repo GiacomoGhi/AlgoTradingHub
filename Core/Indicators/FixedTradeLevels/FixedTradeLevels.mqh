@@ -3,10 +3,11 @@
 #include "../../Shared/Interfaces/ITradeLevelsIndicator.mqh";
 #include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
+#include "../../Managers/TradeManager/TradeManager.mqh";
 
 class FixedTradeLevels : public ITradeLevelsIndicator
 {
-  private:
+private:
     /**
      * Logger
      */
@@ -52,7 +53,12 @@ class FixedTradeLevels : public ITradeLevelsIndicator
      */
     int _orderExpirationHour;
 
-  public:
+    /**
+     * Flag to indicate if grid trading is enabled.
+     */
+    bool _isGridTradingEnabled;
+
+public:
     /**
      * Constructor to initialize FixedTradeLevels with specific parameters.
      */
@@ -65,7 +71,8 @@ class FixedTradeLevels : public ITradeLevelsIndicator
         int shortTradesStopLossLenght = 0,
         int orderDistanceFromCurrentPrice = 0,
         ENUM_ORDER_TYPE_TIME orderTypeTime = ORDER_TIME_GTC,
-        int orderExpirationHour = -1)
+        int orderExpirationHour = -1,
+        bool isGridTradingEnabled = false)
         : _logger(&logger),
           _contextParams(&contextParams),
           _longTradesTakeProfitLenght(longTradesTakeProfitLenght),
@@ -74,7 +81,8 @@ class FixedTradeLevels : public ITradeLevelsIndicator
           _shortTradesStopLossLenght(shortTradesStopLossLenght),
           _orderDistanceFromCurrentPrice(orderDistanceFromCurrentPrice),
           _orderTypeTime(orderTypeTime),
-          _orderExpirationHour(orderExpirationHour)
+          _orderExpirationHour(orderExpirationHour),
+          _isGridTradingEnabled(isGridTradingEnabled)
     {
         _logger.LogInitCompleted(__FUNCTION__);
     };
@@ -94,12 +102,24 @@ class FixedTradeLevels : public ITradeLevelsIndicator
         }
     }
 
-  private:
+private:
     /**
      * Generates trade levels for a market order based on the trade signal..
      */
     TradeLevels *GetMarketOrderTradeLevels(TradeSignalTypeEnum tradeSignal)
     {
+        // If grid trading is enabled and there is an open position
+        // next position is considered as a mediation position without any tp/sl levels.
+        bool isLong = TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignal);
+        if (_isGridTradingEnabled && TradeManager::SelectLatestPosition(
+                                         _logger,
+                                         _contextParams.MagicNumber,
+                                         _contextParams.Symbol,
+                                         isLong ? 1 : -1))
+        {
+            return new TradeLevels();
+        }
+
         // Prepare ask and bid price
         double currentAskPrice = MarketHelper::GetAskPrice(_contextParams.Symbol);
         double currentBidPrice = MarketHelper::GetBidPrice(_contextParams.Symbol);
@@ -108,7 +128,7 @@ class FixedTradeLevels : public ITradeLevelsIndicator
         double takeProfitPrice;
         double stopLossPrice;
         const double points = _contextParams.Points;
-        if (TradeSignalTypeEnumHelper::IsOpenBuyType(tradeSignal))
+        if (isLong)
         {
             takeProfitPrice = _longTradesTakeProfitLenght > 0
                                   ? currentAskPrice + (_longTradesTakeProfitLenght * points)

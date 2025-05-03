@@ -3,6 +3,7 @@
 
 #include "../../../Libraries/List/BasicList.mqh";
 #include "../../Shared/Helpers/MathHelper.mqh";
+#include "../../Shared/Helpers/MarketHelper.mqh";
 #include "../../Shared/Logger/Logger.mqh";
 #include "../../Shared/Models/ContextParams.mqh";
 #include "./Models/PeriodDrawdownItem.mqh";
@@ -120,6 +121,7 @@ public:
             return NormalizeVolume(GetOppositeDirectionTotalVolume(isLong));
         }
 
+        // One lot every x amount of money in the account
         if (sizeCalculationType == ONE_LOT_EVERY)
         {
             return NormalizeVolume(
@@ -127,6 +129,22 @@ public:
                     _logger,
                     _accountInfo.Balance(),
                     sizeValueOrPercentage));
+        }
+
+        // Price based size
+        if (sizeCalculationType == PRICE_BASED_SIZE_FIXED ||
+            sizeCalculationType == PRICE_BASED_SIZE_PROGRESSIVE)
+        {
+            // Total positions size
+            double totalPositionSize = sizeCalculationType == PRICE_BASED_SIZE_FIXED
+                                           ? sizeValueOrPercentage
+                                           : NormalizeVolume(
+                                                 MathHelper::SafeDivision(
+                                                     _logger,
+                                                     _accountInfo.Balance(),
+                                                     sizeValueOrPercentage));
+
+            return NormalizeVolume(PriceBasedSize(isLong, totalPositionSize));
         }
 
         // Validate stop size
@@ -314,5 +332,53 @@ private:
         }
 
         return totalVolumeAmount;
+    }
+
+    /**
+     * Calculate position size based on price.
+     * For long trades: the lower the price, the bigger the lot size.
+     * For short trades: the higher the price, the bigger the lot size.
+     */
+    double PriceBasedSize(bool isLong, double totalPositionSize)
+    {
+        // Get entry price
+        double entryPrice = isLong
+                                ? MarketHelper::GetAskPrice(_contextParams.Symbol)
+                                : MarketHelper::GetBidPrice(_contextParams.Symbol);
+
+        // Validate entry price
+        if (entryPrice > _params.MaxPrice || entryPrice < _params.MinPrice)
+        {
+            _logger.Log(ERROR, __FUNCTION__, "Invalid entry price: " + DoubleToString(entryPrice));
+            return 0;
+        }
+
+        // Calculate price range
+        double priceRange = MathAbs(_params.MaxPrice - _params.MinPrice);
+
+        // Get available positions count
+        double priceDeltaPoints = _params.PriceDelta * _contextParams.Points;
+        double availablePositionsCount = MathFloor(MathHelper::SafeDivision(
+            _logger,
+            priceRange,
+            priceDeltaPoints));
+
+        // Calculate progressive sum of available positions
+        double progressiveSum = availablePositionsCount * (availablePositionsCount + 1) / 2;
+
+        // Calculate current position number
+        double limitPrice = isLong ? _params.MaxPrice : _params.MinPrice;
+        double currentPositionNumber = MathFloor(MathHelper::SafeDivision(
+            _logger,
+            MathAbs(entryPrice - limitPrice),
+            priceDeltaPoints));
+
+        // Calculate position size
+        double positionSize = MathHelper::SafeDivision(
+            _logger,
+            (totalPositionSize * availablePositionsCount * currentPositionNumber),
+            progressiveSum);
+
+        return positionSize;
     }
 }
