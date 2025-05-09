@@ -28,11 +28,15 @@
 #include "../../Core/Indicators/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh";
 
 // Exposure status indicator params
-#include "./AdditionalParams/ExposureStatusIndicatorAdditionalParams.0.mqh";
 #include "../../Core/Indicators/TimeIndicator/Params/TimeIndicatorParams.0.mqh";
+#include "./AdditionalParams/ExposureStatusIndicatorAdditionalParams.0.mqh";
 
 // Time indicator params
 #include "./AdditionalParams/TimeIndicatorAdditionalParams.0.mqh";
+
+// Relative strength index params
+#include "../../Core/Indicators/RelativeStrenghtIndex/Params/RelativeStrenghtIndexIndicatorParams.mqh";
+#include "./AdditionalParams/RelativeStrenghtIndexIndicatorAdditionalParams.mqh";
 
 // ATH Expert advisor object
 ATHExpertAdvisor *TradingSystem;
@@ -62,6 +66,14 @@ int OnInit()
         new CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>(
             __exposure_status_indicator_0_signal_type_1,
             __exposure_status_indicator_0_signal_trigger_1));
+    exposureStatusIndicatorSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>(
+            __exposure_status_indicator_0_signal_type_2,
+            __exposure_status_indicator_0_signal_trigger_2));
+    exposureStatusIndicatorSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, ExposureStatusIndicatorSignalsEnum>(
+            __exposure_status_indicator_0_signal_type_3,
+            __exposure_status_indicator_0_signal_trigger_3));
 
     // Add exposure status indicator to trade signals list
     tradeSignalsList.Append(
@@ -102,6 +114,28 @@ int OnInit()
             __time_indicator_0_range_stop_hour,
             __time_indicator_0_range_start_day,
             __time_indicator_0_range_stop_day));
+
+    // Relative strength index singals type and trigger associations
+    ObjectList<CKeyValuePair<TradeSignalTypeEnum, RelativeStrenghtIndexSignalsEnum>> *relativeStrenghtIndexSignalTypeTriggerStore = new ObjectList<CKeyValuePair<TradeSignalTypeEnum, RelativeStrenghtIndexSignalsEnum>>();
+    relativeStrenghtIndexSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, RelativeStrenghtIndexSignalsEnum>(
+            __relative_strenght_index_0_signal_type_0,
+            __relative_strenght_index_0_signal_trigger_0));
+    relativeStrenghtIndexSignalTypeTriggerStore.Append(
+        new CKeyValuePair<TradeSignalTypeEnum, RelativeStrenghtIndexSignalsEnum>(
+            __relative_strenght_index_0_signal_type_1,
+            __relative_strenght_index_0_signal_trigger_1));
+
+    tradeSignalsList.Append(
+        new RelativeStrenghtIndexIndicator(
+            logger,
+            SYMBOL,
+            __relative_strenght_index_0_time_frame,
+            relativeStrenghtIndexSignalTypeTriggerStore,
+            __relative_strenght_index_0_ma_period,
+            __relative_strenght_index_0_applied_price,
+            __relative_strenght_index_0_overbought_level,
+            __relative_strenght_index_0_oversold_level));
 
     // Trade manager params
     TradeManagerParams *tradeManagerParams = new TradeManagerParams(

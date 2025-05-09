@@ -165,6 +165,14 @@ public:
         {
             // Get trade
             CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
+
+            _logger.Log(
+                DEBUG,
+                __FUNCTION__,
+                "Trade type: " + EnumToString(trade.Value()) +
+                    ", signal type: " + EnumToString(signalType) +
+                    ", trade ticket: " + (string)trade.Key());
+
             if (trade.Value() != tradeType)
             {
                 continue;
@@ -626,6 +634,13 @@ private:
         ENUM_ORDER_TYPE_TIME orderTypeTime,
         datetime orderExpiration)
     {
+        _logger.Log(
+            DEBUG,
+            __FUNCTION__,
+            "Opening order with entry price: " + (string)orderEntryPrice +
+                ", stop loss: " + (string)stopLoss +
+                ", take profit: " + (string)takeProfit);
+
         // Normalize prices
         takeProfit = NormalizeDouble(takeProfit, _contextParams.Digits);
         stopLoss = NormalizeDouble(stopLoss, _contextParams.Digits);
@@ -710,6 +725,11 @@ private:
                 _logger.Log(ERROR, __FUNCTION__, "Trade failed with error: " + (string)GetLastError());
                 return;
             }
+
+            _logger.Log(
+                DEBUG,
+                __FUNCTION__,
+                "Trade opened with ticket: " + (string)_market.ResultOrder());
 
             // Store into trades tickets store
             _tradesStore.Append(

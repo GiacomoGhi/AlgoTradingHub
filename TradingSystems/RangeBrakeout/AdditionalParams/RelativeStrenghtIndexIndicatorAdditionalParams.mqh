@@ -1,0 +1,4 @@
+input TradeSignalTypeEnum __relative_strenght_index_0_signal_type_0 = TradeSignalTypeEnum::NONE;                                            // #1 Trade signal type
+input RelativeStrenghtIndexSignalsEnum __relative_strenght_index_0_signal_trigger_0 = RelativeStrenghtIndexSignalsEnum::RSI_NOT_OVERBOUGHT; // #1 Trade signal trigger
+input TradeSignalTypeEnum __relative_strenght_index_0_signal_type_1 = TradeSignalTypeEnum::NONE;                                            // #2 Trade signal type
+input RelativeStrenghtIndexSignalsEnum __relative_strenght_index_0_signal_trigger_1 = RelativeStrenghtIndexSignalsEnum::RSI_NOT_OVERBOUGHT; // #2 Trade signal trigger

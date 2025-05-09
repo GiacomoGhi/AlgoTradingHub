@@ -5,3 +5,4 @@
 #include "./MovingAvarage/MovingAvarage.mqh";
 #include "./StaticRange/StaticRange.mqh";
 #include "./TimeIndicator/TimeIndicator.mqh";
+#include "./RelativeStrenghtIndex/RelativeStrenghtIndexIndicator.mqh";

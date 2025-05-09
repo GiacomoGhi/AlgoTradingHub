@@ -2,3 +2,7 @@ input TradeSignalTypeEnum __exposure_status_indicator_0_signal_type_0 = TradeSig
 input ExposureStatusIndicatorSignalsEnum __exposure_status_indicator_0_signal_trigger_0 = ExposureStatusIndicatorSignalsEnum::NOT_ANY_SELL_POSITIONS; // #1 Trade signal trigger
 input TradeSignalTypeEnum __exposure_status_indicator_0_signal_type_1 = TradeSignalTypeEnum::OPEN_SELL_MARKET;                                        // #2 Trade signal type
 input ExposureStatusIndicatorSignalsEnum __exposure_status_indicator_0_signal_trigger_1 = ExposureStatusIndicatorSignalsEnum::NOT_ANY_SELL_POSITIONS; // #2 Trade signal trigger
+input TradeSignalTypeEnum __exposure_status_indicator_0_signal_type_2 = TradeSignalTypeEnum::OPEN_SELL_MARKET;                                        // #3 Trade signal type
+input ExposureStatusIndicatorSignalsEnum __exposure_status_indicator_0_signal_trigger_2 = ExposureStatusIndicatorSignalsEnum::NOT_ANY_SELL_POSITIONS; // #3 Trade signal trigger
+input TradeSignalTypeEnum __exposure_status_indicator_0_signal_type_3 = TradeSignalTypeEnum::OPEN_SELL_MARKET;                                        // #4 Trade signal type
+input ExposureStatusIndicatorSignalsEnum __exposure_status_indicator_0_signal_trigger_3 = ExposureStatusIndicatorSignalsEnum::NOT_ANY_SELL_POSITIONS; // #4 Trade signal trigger
