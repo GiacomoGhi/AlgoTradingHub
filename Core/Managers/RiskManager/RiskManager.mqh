@@ -368,7 +368,7 @@ private:
 
         // Calculate current position number
         double limitPrice = isLong ? _params.MaxPrice : _params.MinPrice;
-        double currentPositionNumber = MathFloor(MathHelper::SafeDivision(
+        double currentPositionNumber = MathCeil(MathHelper::SafeDivision(
             _logger,
             MathAbs(entryPrice - limitPrice),
             priceDeltaPoints));

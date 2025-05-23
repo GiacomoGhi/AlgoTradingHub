@@ -329,11 +329,31 @@ public:
         {
             // Variables for readability
             CKeyValuePair<ulong, TradeTypeEnum> *trade = _tradesStore.Get(i);
-            BreakEvenExecutionModeEnum breakEvenExecutionMode = _tradeManagerParams.BreakEvenExecutionMode;
-            bool isLong = trade.Value() == TRADE_TYPE_BUY;
+
+            // Transform opened pending orders values in order values
+            TradeTypeEnum tradeValue = trade.Value();
+            if ((tradeValue != TRADE_TYPE_BUY && tradeValue != TRADE_TYPE_SELL))
+            {
+                // Try select postion
+                if (!PositionSelectByTicket(trade.Key()))
+                {
+                    // Skip, still pending order
+                    continue;
+                }
+
+                // Conver trade value from pending to position
+                TradeTypeEnum newTradeType = TradeTypeEnumHelper::IsLong(tradeValue)
+                                                 ? TradeTypeEnum::TRADE_TYPE_BUY
+                                                 : TradeTypeEnum::TRADE_TYPE_SELL;
+
+                // Set value
+                trade.Value(newTradeType);
+            }
 
             // Open position check
-            if ((trade.Value() != TRADE_TYPE_BUY && trade.Value() != TRADE_TYPE_SELL)
+            bool isLong = tradeValue == TRADE_TYPE_BUY;
+            BreakEvenExecutionModeEnum breakEvenExecutionMode = _tradeManagerParams.BreakEvenExecutionMode;
+            if ((tradeValue != TRADE_TYPE_BUY && tradeValue != TRADE_TYPE_SELL)
                 // Trade type and execution mode check
                 || (breakEvenExecutionMode == BreakEvenExecutionModeEnum::BUY_POSITIONS && !isLong)
                 // Trade type and execution mode check

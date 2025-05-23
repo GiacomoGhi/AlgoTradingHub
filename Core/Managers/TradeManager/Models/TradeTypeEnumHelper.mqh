@@ -97,4 +97,23 @@ public:
             return false;
         }
     }
+
+    static bool IsLong(TradeTypeEnum source)
+    {
+        switch (source)
+        {
+        case TradeTypeEnum::TRADE_TYPE_BUY:
+        case TradeTypeEnum::TRADE_TYPE_BUY_LIMIT:
+        case TradeTypeEnum::TRADE_TYPE_BUY_STOP:
+            return true;
+
+        case TradeTypeEnum::TRADE_TYPE_SELL:
+        case TradeTypeEnum::TRADE_TYPE_SELL_LIMIT:
+        case TradeTypeEnum::TRADE_TYPE_SELL_STOP:
+            return false;
+
+        default:
+            return false;
+        }
+    }
 }
