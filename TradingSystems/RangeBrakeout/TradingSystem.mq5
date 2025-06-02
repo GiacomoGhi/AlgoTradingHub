@@ -9,34 +9,34 @@
 #property version "1.00"
 
 // Include Algo Trading Hub components
-#include "../../Core/ATHExpertAdvisor.mqh";
-#include "../../Core/index.mqh";
+#include <Core/ATHExpertAdvisor.mqh>;
+#include <Core/index.mqh>;
 
 // Base system params
-#include "../../Core/BaseSystemParams.mqh";
+#include <Core/BaseSystemParams.mqh>;
 
 // Risk manager params
-#include "../../Core/Managers/RiskManager/Params/RiskParams.mqh";
-#include "./AdditionalParams/RiskAdditionalParams.mqh";
+#include <Core/Managers/RiskManager/Params/RiskParams.mqh>;
+#include <AdditionalParams/RiskAdditionalParams.mqh>;
 
 // Trade levels indicator params
-#include "../../Core/Indicators/PriceRangeTradeLevels/Params/PriceRangeTradeLevelsParams.mqh";
-#include "./AdditionalParams/PriceRangeTradeLevelsAdditionalParams.0.mqh";
+#include <Core/Indicators/PriceRangeTradeLevels/Params/PriceRangeTradeLevelsParams.mqh>;
+#include <AdditionalParams/PriceRangeTradeLevelsAdditionalParams.0.mqh>;
 
 // Trade manager params
-#include "../../Core/Managers/TradeManager/Params/TradeManagerParams.mqh"
-#include "../../Core/Indicators/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh";
+#include <Core/Managers/TradeManager/Params/TradeManagerParams.mqh>;
+#include <Core/Indicators/ExposureStatusIndicator/Params/ExposureStatusIndicatorParams.0.mqh>;
 
 // Exposure status indicator params
-#include "../../Core/Indicators/TimeIndicator/Params/TimeIndicatorParams.0.mqh";
-#include "./AdditionalParams/ExposureStatusIndicatorAdditionalParams.0.mqh";
+#include <Core/Indicators/TimeIndicator/Params/TimeIndicatorParams.0.mqh>;
+#include <AdditionalParams/ExposureStatusIndicatorAdditionalParams.0.mqh>;
 
 // Time indicator params
-#include "./AdditionalParams/TimeIndicatorAdditionalParams.0.mqh";
+#include <AdditionalParams/TimeIndicatorAdditionalParams.0.mqh>;
 
 // Relative strength index params
-#include "../../Core/Indicators/RelativeStrenghtIndex/Params/RelativeStrenghtIndexIndicatorParams.mqh";
-#include "./AdditionalParams/RelativeStrenghtIndexIndicatorAdditionalParams.mqh";
+#include <Core/Indicators/RelativeStrenghtIndex/Params/RelativeStrenghtIndexIndicatorParams.mqh>;
+#include <AdditionalParams/RelativeStrenghtIndexIndicatorAdditionalParams.mqh>;
 
 // ATH Expert advisor object
 ATHExpertAdvisor *TradingSystem;
